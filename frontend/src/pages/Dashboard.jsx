@@ -1,29 +1,31 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import API from "../services/api";
 
-const stats = [
-  { label: "Total Calls", value: "24", icon: "📞", color: "bg-blue-500" },
-  { label: "Total Leads", value: "18", icon: "👥", color: "bg-green-500" },
-  {
-    label: "Appointments Today",
-    value: "5",
-    icon: "📅",
-    color: "bg-purple-500",
-  },
-  {
-    label: "Conversion Rate",
-    value: "75%",
-    icon: "📈",
-    color: "bg-orange-500",
-  },
-];
-
 function Dashboard() {
+  const [stats, setStats] = useState({
+    total_calls: 0,
+    total_leads: 0,
+    appointments_today: 0,
+    conversion_rate: 0,
+  });
   const [audioFile, setAudioFile] = useState(null);
   const [transcript, setTranscript] = useState("");
   const [aiReply, setAiReply] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    API.get("/api/analytics/overview")
+      .then((res) => setStats(res.data))
+      .catch(() => {
+        // Fallback — leads count se stats banao
+        API.get("/api/leads")
+          .then((res) => {
+            setStats((prev) => ({ ...prev, total_leads: res.data.length }));
+          })
+          .catch(() => {});
+      });
+  }, []);
 
   const handleUpload = async () => {
     if (!audioFile) {
@@ -43,19 +45,44 @@ function Dashboard() {
       setTranscript(res.data.transcript);
       setAiReply(res.data.ai_reply);
     } catch (err) {
-      setError(
-        "Backend not connected yet — will work once Prarthna sets up the API!",
-      );
+      setError("Error processing audio. Check backend connection!");
     } finally {
       setLoading(false);
     }
   };
 
+  const statCards = [
+    {
+      label: "Total Calls",
+      value: stats.total_calls,
+      icon: "📞",
+      color: "bg-blue-500",
+    },
+    {
+      label: "Total Leads",
+      value: stats.total_leads,
+      icon: "👥",
+      color: "bg-green-500",
+    },
+    {
+      label: "Appointments Today",
+      value: stats.appointments_today,
+      icon: "📅",
+      color: "bg-purple-500",
+    },
+    {
+      label: "Conversion Rate",
+      value: stats.conversion_rate ? `${stats.conversion_rate}%` : "0%",
+      icon: "📈",
+      color: "bg-orange-500",
+    },
+  ];
+
   return (
     <div className="space-y-6">
       {/* Stat Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {stats.map((stat) => (
+        {statCards.map((stat) => (
           <div
             key={stat.label}
             className="bg-white rounded-xl shadow-sm p-6 flex items-center gap-4"
@@ -110,7 +137,6 @@ function Dashboard() {
           {loading ? "⏳ Processing..." : "🚀 Upload & Process"}
         </button>
 
-        {/* Results */}
         {transcript && (
           <div className="mt-4 p-4 bg-gray-50 rounded-lg">
             <p className="text-sm font-semibold text-gray-700 mb-1">

@@ -1,4 +1,5 @@
 from functools import lru_cache
+from pathlib import Path
 from pydantic_settings import BaseSettings
 
 
@@ -12,9 +13,17 @@ class Settings(BaseSettings):
     jwt_algorithm: str = "HS256"
 
     class Config:
-        env_file = ".env"
+        # Point to the .env located inside the app package so loading works
+        # regardless of the current working directory when the server starts.
+        env_file = str(Path(__file__).parent / ".env")
 
 
 @lru_cache()
 def get_settings():
-    return Settings()
+    s = Settings()
+    # Strip common API key/env values to avoid accidental whitespace issues
+    for attr in ("openai_api_key", "elevenlabs_api_key", "groq_api_key"):
+        val = getattr(s, attr, None)
+        if isinstance(val, str):
+            setattr(s, attr, val.strip())
+    return s

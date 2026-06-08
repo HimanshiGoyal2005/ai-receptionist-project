@@ -18,6 +18,7 @@ function App() {
           element={isLoggedIn ? <Layout /> : <Navigate to="/login" />}
         >
           <Route index element={<Dashboard />} />
+          <Route path="dashboard" element={<Dashboard />} />
           <Route path="leads" element={<Leads />} />
           <Route path="conversations" element={<Conversations />} />
           <Route path="appointments" element={<Appointments />} />

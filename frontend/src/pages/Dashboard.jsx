@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import API from "../services/api";
 
 function Dashboard() {
@@ -11,14 +11,15 @@ function Dashboard() {
   const [audioFile, setAudioFile] = useState(null);
   const [transcript, setTranscript] = useState("");
   const [aiReply, setAiReply] = useState("");
+  const [audioUrl, setAudioUrl] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const audioRef = useRef(null);
 
   useEffect(() => {
     API.get("/api/analytics/overview")
       .then((res) => setStats(res.data))
       .catch(() => {
-        // Fallback — leads count se stats banao
         API.get("/api/leads")
           .then((res) => {
             setStats((prev) => ({ ...prev, total_leads: res.data.length }));
@@ -36,6 +37,7 @@ function Dashboard() {
     setError("");
     setTranscript("");
     setAiReply("");
+    setAudioUrl("");
 
     const formData = new FormData();
     formData.append("audio", audioFile);
@@ -44,6 +46,23 @@ function Dashboard() {
       const res = await API.post("/api/call/process", formData);
       setTranscript(res.data.transcript);
       setAiReply(res.data.ai_reply);
+
+      // Audio URL set karo
+      if (res.data.audio_url) {
+        const fullAudioUrl = `http://localhost:8000${res.data.audio_url}`;
+        setAudioUrl(fullAudioUrl);
+        // Auto play
+        setTimeout(() => {
+          if (audioRef.current) {
+            audioRef.current.play().catch(() => {});
+          }
+        }, 500);
+      }
+
+      // Stats refresh karo
+      API.get("/api/analytics/overview")
+        .then((res) => setStats(res.data))
+        .catch(() => {});
     } catch (err) {
       setError("Error processing audio. Check backend connection!");
     } finally {
@@ -108,7 +127,7 @@ function Dashboard() {
 
         <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center mb-4">
           <p className="text-gray-500 mb-3">
-            Upload a .wav, .mp3, .m4a, or .mp4 file to test the AI pipeline
+            Upload a .wav, .mp3, .m4a or .mp4 file
           </p>
           <input
             type="file"
@@ -137,6 +156,7 @@ function Dashboard() {
           {loading ? "⏳ Processing..." : "🚀 Upload & Process"}
         </button>
 
+        {/* Results */}
         {transcript && (
           <div className="mt-4 p-4 bg-gray-50 rounded-lg">
             <p className="text-sm font-semibold text-gray-700 mb-1">
@@ -145,12 +165,25 @@ function Dashboard() {
             <p className="text-sm text-gray-600">{transcript}</p>
           </div>
         )}
+
         {aiReply && (
           <div className="mt-3 p-4 bg-blue-50 rounded-lg">
             <p className="text-sm font-semibold text-blue-700 mb-1">
               🤖 AI Reply:
             </p>
             <p className="text-sm text-blue-600">{aiReply}</p>
+          </div>
+        )}
+
+        {/* Audio Player */}
+        {audioUrl && (
+          <div className="mt-4 p-4 bg-green-50 rounded-lg border border-green-200">
+            <p className="text-sm font-semibold text-green-700 mb-2">
+              🔊 AI Voice Reply:
+            </p>
+            <audio ref={audioRef} controls className="w-full" src={audioUrl}>
+              Your browser does not support audio.
+            </audio>
           </div>
         )}
       </div>

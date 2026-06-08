@@ -108,11 +108,11 @@ function Dashboard() {
 
         <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center mb-4">
           <p className="text-gray-500 mb-3">
-            Upload a .wav or .mp3 file to test the AI pipeline
+            Upload a .wav, .mp3, .m4a, or .mp4 file to test the AI pipeline
           </p>
           <input
             type="file"
-            accept=".wav,.mp3,.m4a"
+            accept=".wav,.mp3,.m4a,.mp4"
             onChange={(e) => setAudioFile(e.target.files[0])}
             className="text-sm text-gray-600"
           />

@@ -1,5 +1,7 @@
 import os
+import re
 import uuid
+from datetime import datetime, timedelta
 from fastapi import APIRouter, Depends, UploadFile, File, HTTPException
 from sqlalchemy.orm import Session
 
@@ -9,7 +11,7 @@ from app.models.conversation import Conversation
 from app.models.appointment import Appointment
 from app.models.call_log import CallLog
 from app.services.stt_service import transcribe_audio
-from app.services.llm_service import get_llm_response
+from app.services.llm_service import get_llm_response, normalize_lead_data
 from app.services.tts_service import text_to_speech
 from app.utils.logger import get_logger
 
@@ -18,6 +20,79 @@ router = APIRouter(prefix="/api/call", tags=["Call Processing"])
 
 UPLOAD_DIR = "static/uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+WEEKDAY_MAP = {
+    "monday": 0,
+    "tuesday": 1,
+    "wednesday": 2,
+    "thursday": 3,
+    "friday": 4,
+    "saturday": 5,
+    "sunday": 6,
+}
+
+
+def find_next_weekday(base_date: datetime, weekday_name: str) -> datetime:
+    target = WEEKDAY_MAP.get(weekday_name.lower())
+    if target is None:
+        return base_date
+    days_ahead = target - base_date.weekday()
+    if days_ahead <= 0:
+        days_ahead += 7
+    return base_date + timedelta(days=days_ahead)
+
+
+def parse_appointment_from_transcript(transcript: str):
+    text = transcript.lower()
+    appointment_date = None
+    appointment_time = None
+
+    # Parse time like 3pm, 3:00 pm, 3 pm, 15:00
+    time_match = re.search(r"\b(1[0-2]|0?[1-9])(?::([0-5][0-9]))?\s*(am|pm)\b", text)
+    if time_match:
+        hour = int(time_match.group(1))
+        minute = int(time_match.group(2) or "0")
+        suffix = time_match.group(3)
+        if suffix == "pm" and hour != 12:
+            hour += 12
+        if suffix == "am" and hour == 12:
+            hour = 0
+        appointment_time = f"{hour:02d}:{minute:02d}"
+    elif re.search(r"\bnoon\b", text):
+        appointment_time = "12:00"
+    elif re.search(r"\bafternoon\b", text):
+        appointment_time = "15:00"
+    elif re.search(r"\bevening\b", text):
+        appointment_time = "18:00"
+
+    # Parse relative weekdays
+    if "next monday" in text:
+        appointment_date = find_next_weekday(datetime.utcnow(), "monday").date()
+    elif "next tuesday" in text:
+        appointment_date = find_next_weekday(datetime.utcnow(), "tuesday").date()
+    elif "next wednesday" in text:
+        appointment_date = find_next_weekday(datetime.utcnow(), "wednesday").date()
+    elif "next thursday" in text:
+        appointment_date = find_next_weekday(datetime.utcnow(), "thursday").date()
+    elif "next friday" in text:
+        appointment_date = find_next_weekday(datetime.utcnow(), "friday").date()
+    elif "next saturday" in text:
+        appointment_date = find_next_weekday(datetime.utcnow(), "saturday").date()
+    elif "next sunday" in text:
+        appointment_date = find_next_weekday(datetime.utcnow(), "sunday").date()
+    elif "tomorrow" in text:
+        appointment_date = (datetime.utcnow() + timedelta(days=1)).date()
+    elif "today" in text:
+        appointment_date = datetime.utcnow().date()
+    else:
+        for name in WEEKDAY_MAP.keys():
+            if re.search(fr"\b{name}\b", text):
+                appointment_date = find_next_weekday(datetime.utcnow(), name).date()
+                break
+
+    if appointment_date:
+        appointment_date = appointment_date.strftime("%Y-%m-%d")
+    return appointment_date, appointment_time
 
 
 @router.post("/process")
@@ -48,6 +123,20 @@ async def process_call(
         llm_result = get_llm_response(transcript)
         ai_reply = llm_result["reply"]
         extracted = llm_result.get("extracted_data", {})
+        extracted = normalize_lead_data(extracted)
+
+        # Fallback: detect appointment date/time directly from transcript
+        parsed_date, parsed_time = parse_appointment_from_transcript(transcript)
+        if not extracted.get("appointment_date") and parsed_date:
+            extracted["appointment_date"] = parsed_date
+        if not extracted.get("appointment_time") and parsed_time:
+            extracted["appointment_time"] = parsed_time
+        if (
+            extracted.get("appointment_date")
+            and extracted.get("appointment_time")
+            and extracted.get("intent") != "appointment"
+        ):
+            extracted["intent"] = "appointment"
 
         # Step D: Lead Auto-Save
         if extracted.get("name") and extracted.get("phone"):

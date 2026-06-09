@@ -14,11 +14,12 @@ function Layout() {
   const title = pageTitles[location.pathname] || "Dashboard";
 
   return (
-    <div className="flex bg-gray-50 min-h-screen">
+    <div className="flex bg-[#080B11] min-h-screen antialiased text-gray-100">
       <Sidebar />
       <div className="flex-1 ml-64">
         <Navbar title={title} />
-        <main className="mt-16 p-6">
+        {/* Adjusted spacing to blend nicely under the fixed glass navbar */}
+        <main className="mt-16 p-8">
           <Outlet />
         </main>
       </div>

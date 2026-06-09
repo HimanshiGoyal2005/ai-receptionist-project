@@ -19,6 +19,15 @@ logs/
 *.sqlite3
 *.db
 
+# Static and generated files
+static/
+frontend/node_modules/
+frontend/dist/
+frontend/.env
+
+tmp*.py
+scripts/
+
 # OS files
 .DS_Store
 

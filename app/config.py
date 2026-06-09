@@ -5,7 +5,7 @@ from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
     debug: bool = True
-    database_url: str = "sqlite:///./receptionist.db"
+    database_url: str = "postgresql://postgres:pg_password@localhost:5432/receptionist_db"
     openai_api_key: str = ""
     elevenlabs_api_key: str = ""
     groq_api_key: str = ""          # ✅ Ye add karo

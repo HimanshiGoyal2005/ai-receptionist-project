@@ -8,6 +8,7 @@ from app.api.leads_api import router as leads_router
 from app.api.appointments_api import router as appointments_router
 from app.api.call_api import router as call_router
 from app.api.analytics_api import router as analytics_router
+from app.api.conversations_api import router as conversations_router
 from app.api.auth_api import router as auth_router
 from app.utils.logger import get_logger
 
@@ -37,6 +38,7 @@ app.include_router(leads_router)
 app.include_router(appointments_router)
 app.include_router(call_router)
 app.include_router(analytics_router)
+app.include_router(conversations_router)
 
 
 @app.on_event("startup")

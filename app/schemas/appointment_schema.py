@@ -13,6 +13,8 @@ class AppointmentCreate(BaseModel):
 class AppointmentResponse(BaseModel):
     id: int
     lead_id: Optional[int]
+    lead_name: Optional[str] = None
+    lead_phone: Optional[str] = None
     appointment_date: str
     appointment_time: str
     status: str

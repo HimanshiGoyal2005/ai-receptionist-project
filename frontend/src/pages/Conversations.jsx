@@ -1,6 +1,24 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import API from "../services/api";
 
-const dummyConversations = [
+const intentStyles = {
+  lead: "bg-blue-500/10 text-blue-400 border border-blue-500/20 shadow-[0_0_15px_rgba(59,130,246,0.05)]",
+  appointment:
+    "bg-purple-500/10 text-purple-400 border border-purple-500/20 shadow-[0_0_15px_rgba(168,85,247,0.05)]",
+  faq: "bg-gray-500/10 text-gray-400 border border-gray-500/20",
+};
+
+const sentimentStyles = {
+  positive:
+    "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shadow-[0_0_15px_rgba(16,185,129,0.05)]",
+  neutral:
+    "bg-amber-500/10 text-amber-400 border border-amber-500/20 shadow-[0_0_15px_rgba(245,158,11,0.05)]",
+  negative:
+    "bg-red-500/10 text-red-400 border border-red-500/20 shadow-[0_0_15px_rgba(239,68,68,0.05)]",
+};
+
+// Fallback dummy data structure if backend endpoint returns empty
+const backupConversations = [
   {
     id: 1,
     lead: "Rahul Sharma",
@@ -25,121 +43,188 @@ const dummyConversations = [
     ai_summary:
       "Customer wants website design for boutique. Requested appointment for tomorrow 3PM. Budget: ₹30k.",
   },
-  {
-    id: 3,
-    lead: "Amit Verma",
-    phone: "9898989898",
-    intent: "faq",
-    sentiment: "positive",
-    date: "2026-06-04 11:00 AM",
-    transcript:
-      "What technologies do you use for mobile app development? Do you support both Android and iOS? What is the typical timeline?",
-    ai_summary:
-      "Customer asked about mobile app tech stack and timeline. Interested in cross-platform development.",
-  },
-  {
-    id: 4,
-    lead: "Neha Gupta",
-    phone: "9765432109",
-    intent: "lead",
-    sentiment: "neutral",
-    date: "2026-06-03 04:45 PM",
-    transcript:
-      "I want to improve my website SEO. Currently getting very less traffic. My monthly budget for this is 20,000 rupees.",
-    ai_summary:
-      "Customer needs SEO services. Low website traffic issue. Budget: ₹20k/month.",
-  },
 ];
 
-const intentStyles = {
-  lead: "bg-blue-100 text-blue-700",
-  appointment: "bg-purple-100 text-purple-700",
-  faq: "bg-gray-100 text-gray-700",
-};
-
-const sentimentStyles = {
-  positive: "bg-green-100 text-green-700",
-  neutral: "bg-yellow-100 text-yellow-700",
-  negative: "bg-red-100 text-red-700",
-};
-
 function Conversations() {
+  const [conversations, setConversations] = useState([]);
   const [expanded, setExpanded] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  // Dynamic API parsing integration
+  useEffect(() => {
+    API.get("/api/conversations")
+      .then((res) => {
+        if (res.data && res.data.length > 0) {
+          setConversations(res.data);
+        } else {
+          setConversations(backupConversations);
+        }
+      })
+      .catch((err) => {
+        console.log(
+          "Backend offline, deploying local pipeline state metrics:",
+          err,
+        );
+        setConversations(backupConversations);
+      })
+      .finally(() => setLoading(false));
+  }, []);
 
   return (
-    <div className="space-y-4">
-      {/* Header */}
-      <div>
-        <h2 className="text-xl font-bold text-gray-800">Conversations</h2>
-        <p className="text-sm text-gray-500">
-          {dummyConversations.length} total conversations
-        </p>
+    <div className="space-y-6 text-gray-100">
+      {/* Dynamic Header */}
+      <div className="flex items-center justify-between border-b border-gray-800/60 pb-5">
+        <div>
+          <h2 className="text-2xl font-bold bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
+            Conversations Log
+          </h2>
+          <p className="text-sm text-gray-500 mt-0.5">
+            {loading
+              ? "Syncing..."
+              : `${conversations.length} total active dialog matrices`}
+          </p>
+        </div>
       </div>
 
-      {/* List */}
-      <div className="space-y-3">
-        {dummyConversations.map((conv) => (
-          <div
-            key={conv.id}
-            className="bg-white rounded-xl shadow-sm overflow-hidden"
-          >
-            {/* Row */}
-            <div
-              className="flex items-center justify-between px-6 py-4 cursor-pointer hover:bg-gray-50 transition-colors"
-              onClick={() => setExpanded(expanded === conv.id ? null : conv.id)}
-            >
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold">
-                  {conv.lead.charAt(0)}
-                </div>
-                <div>
-                  <p className="font-semibold text-gray-800">{conv.lead}</p>
-                  <p className="text-xs text-gray-400">
-                    {conv.phone} · {conv.date}
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <span
-                  className={`px-3 py-1 rounded-full text-xs font-semibold ${intentStyles[conv.intent]}`}
-                >
-                  {conv.intent.charAt(0).toUpperCase() + conv.intent.slice(1)}
-                </span>
-                <span
-                  className={`px-3 py-1 rounded-full text-xs font-semibold ${sentimentStyles[conv.sentiment]}`}
-                >
-                  {conv.sentiment.charAt(0).toUpperCase() +
-                    conv.sentiment.slice(1)}
-                </span>
-                <span className="text-gray-400 text-lg">
-                  {expanded === conv.id ? "▲" : "▼"}
-                </span>
-              </div>
+      {/* Main List Shell */}
+      <div className="space-y-3.5">
+        {loading ? (
+          <div className="text-center py-20 text-gray-500 bg-[#0F1420]/20 rounded-xl border border-gray-800/40">
+            <div className="flex justify-center mb-4">
+              <svg
+                className="animate-spin h-7 w-7 text-blue-500"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                />
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                />
+              </svg>
             </div>
-
-            {/* Expanded */}
-            {expanded === conv.id && (
-              <div className="border-t border-gray-100 px-6 py-4 bg-gray-50 space-y-3">
-                <div>
-                  <p className="text-xs font-semibold text-gray-500 uppercase mb-1">
-                    📝 Transcript
-                  </p>
-                  <p className="text-sm text-gray-700 bg-white rounded-lg p-3 border border-gray-200">
-                    {conv.transcript}
-                  </p>
+            <p className="text-sm font-medium tracking-wide">
+              Decompressing operational logs...
+            </p>
+          </div>
+        ) : (
+          conversations.map((conv) => (
+            <div
+              key={conv.id}
+              className={`bg-[#0F1420]/30 backdrop-blur-md rounded-xl border transition-all duration-300 overflow-hidden shadow-lg ${
+                expanded === conv.id
+                  ? "border-gray-700/80 bg-[#0F1420]/60"
+                  : "border-gray-800/80 hover:border-gray-700/50"
+              }`}
+            >
+              {/* Row Header Trigger */}
+              <div
+                className="flex flex-col sm:flex-row sm:items-center justify-between px-6 py-4.5 cursor-pointer gap-4 transition-colors hover:bg-gray-800/10"
+                onClick={() =>
+                  setExpanded(expanded === conv.id ? null : conv.id)
+                }
+              >
+                <div className="flex items-center gap-4">
+                  {/* Dynamic Letter Badge with gradient tone */}
+                  <div className="w-10 h-10 bg-gradient-to-br from-blue-500/20 to-indigo-500/20 border border-blue-500/30 rounded-xl flex items-center justify-center text-blue-400 font-bold tracking-wide">
+                    {(conv.lead || "U").charAt(0).toUpperCase()}
+                  </div>
+                  <div>
+                    <p className="font-semibold text-white tracking-wide group-hover:text-blue-400 transition-colors">
+                      {conv.lead || "Unknown Client"}
+                    </p>
+                    <p className="text-xs text-gray-500 font-medium mt-0.5">
+                      <span className="font-mono text-gray-400 tracking-wider">
+                        {conv.phone || "—"}
+                      </span>
+                      <span className="mx-2 text-gray-700">·</span>
+                      <span className="text-gray-400">
+                        {conv.date
+                          ? new Date(conv.date).toLocaleString(undefined, {
+                              month: "short",
+                              day: "numeric",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })
+                          : "—"}
+                      </span>
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-xs font-semibold text-gray-500 uppercase mb-1">
-                    🤖 AI Summary
-                  </p>
-                  <p className="text-sm text-blue-700 bg-blue-50 rounded-lg p-3 border border-blue-200">
-                    {conv.ai_summary}
-                  </p>
+
+                {/* Badges Layout Controls */}
+                <div className="flex items-center justify-between sm:justify-end gap-3.5 border-t border-gray-800/40 pt-3 sm:pt-0 sm:border-none">
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={`px-2.5 py-1 rounded-md text-[10px] font-bold tracking-wider uppercase ${intentStyles[conv.intent] || intentStyles.faq}`}
+                    >
+                      {conv.intent}
+                    </span>
+                    <span
+                      className={`px-2.5 py-1 rounded-md text-[10px] font-bold tracking-wider uppercase ${sentimentStyles[conv.sentiment] || sentimentStyles.neutral}`}
+                    >
+                      {conv.sentiment}
+                    </span>
+                  </div>
+                  <span
+                    className={`text-gray-500 text-xs transition-transform duration-200 pl-2 ${expanded === conv.id ? "rotate-180 text-blue-400" : ""}`}
+                  >
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M19 9l-7 7-7-7"
+                      />
+                    </svg>
+                  </span>
                 </div>
               </div>
-            )}
-          </div>
-        ))}
+
+              {/* Collapsible Expanded Panel */}
+              {expanded === conv.id && (
+                <div className="border-t border-gray-800/60 px-6 py-5 bg-[#070A10]/50 space-y-4 animate-fade-in">
+                  <div>
+                    <div className="flex items-center gap-1.5 mb-1.5">
+                      <span className="w-1 h-1 rounded-full bg-gray-500" />
+                      <p className="text-[10px] font-bold text-gray-500 tracking-widest uppercase">
+                        📝 Voice Core Transcript
+                      </p>
+                    </div>
+                    <p className="text-sm text-gray-300 leading-relaxed bg-[#070A10]/80 border border-gray-900/60 rounded-xl p-3.5 font-medium">
+                      {conv.transcript || "No dialogue captured."}
+                    </p>
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-1.5 mb-1.5">
+                      <span className="w-1 h-1 rounded-full bg-blue-400" />
+                      <p className="text-[10px] font-bold text-blue-400 tracking-widest uppercase">
+                        🤖 Structural AI Synthesis Summary
+                      </p>
+                    </div>
+                    <p className="text-sm text-blue-300 leading-relaxed bg-blue-950/20 border border-blue-900/30 rounded-xl p-3.5 font-medium">
+                      {conv.ai_summary ||
+                        "Awaiting extraction execution parameters."}
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+          ))
+        )}
       </div>
     </div>
   );

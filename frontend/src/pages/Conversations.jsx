@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import API from "../services/api";
 
 const intentStyles = {
@@ -174,29 +175,49 @@ function Conversations() {
                       {conv.sentiment}
                     </span>
                   </div>
-                  <span
-                    className={`text-gray-500 text-xs transition-transform duration-200 pl-2 ${expanded === conv.id ? "rotate-180 text-blue-400" : ""}`}
-                  >
-                    <svg
-                      className="w-4 h-4"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2.5"
-                      viewBox="0 0 24 24"
+                  <div className="flex items-center gap-2">
+                    {conv.lead_id ? (
+                      <Link
+                        to={`/conversations/${conv.lead_id}`}
+                        className="text-xs font-semibold uppercase tracking-wide px-3 py-1 rounded-lg bg-blue-500/10 text-blue-300 border border-blue-500/20 hover:bg-blue-500/15 transition-colors"
+                      >
+                        View Thread
+                      </Link>
+                    ) : null}
+                    <span
+                      className={`text-gray-500 text-xs transition-transform duration-200 pl-2 ${expanded === conv.id ? "rotate-180 text-blue-400" : ""}`}
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M19 9l-7 7-7-7"
-                      />
-                    </svg>
-                  </span>
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.5"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M19 9l-7 7-7-7"
+                        />
+                      </svg>
+                    </span>
+                  </div>
                 </div>
               </div>
 
               {/* Collapsible Expanded Panel */}
               {expanded === conv.id && (
                 <div className="border-t border-gray-800/60 px-6 py-5 bg-[#070A10]/50 space-y-4 animate-fade-in">
+                  {conv.lead_id ? (
+                    <div className="flex justify-end">
+                      <Link
+                        to={`/conversations/${conv.lead_id}`}
+                        className="text-xs font-semibold uppercase tracking-wide px-3 py-1 rounded-lg bg-blue-500/10 text-blue-300 border border-blue-500/20 hover:bg-blue-500/15 transition-colors"
+                      >
+                        Open Client Thread
+                      </Link>
+                    </div>
+                  ) : null}
                   <div>
                     <div className="flex items-center gap-1.5 mb-1.5">
                       <span className="w-1 h-1 rounded-full bg-gray-500" />

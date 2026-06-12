@@ -17,10 +17,14 @@ You are an AI receptionist.
 Customer transcript:
 {transcript}
 
+Extract the customer’s lead qualification details and generate a lead score.
+If budget, timeline, team size, or industry are missing from the transcript, ask a clear follow-up question in your reply.
+
 Return ONLY valid JSON in this format:
 
 {{
     "reply": "response to customer",
+    "lead_score": "Hot Lead|Warm Lead|Cold Lead",
     "extracted_data": {{
         "name": "",
         "phone": "",
@@ -28,12 +32,17 @@ Return ONLY valid JSON in this format:
         "requirement": "",
         "budget": "",
         "timeline": "",
+        "team_size": "",
+        "industry": "",
         "intent": "general",
         "appointment_date": "",
         "appointment_time": "",
         "ai_summary": ""
     }}
 }}
+
+Do not wrap the response in markdown or code fences.
+Choose the lead score based on customer interest, qualification, and urgency.
 """
 
     response = client.chat.completions.create(
@@ -85,6 +94,8 @@ Return ONLY valid JSON with these exact keys:
     "requirement": "",
     "budget": "",
     "timeline": "",
+    "team_size": "",
+    "industry": "",
     "intent": "",
     "appointment_date": "",
     "appointment_time": "",
@@ -116,3 +127,130 @@ Input:
         return {**extracted_data, **normalized}
     except Exception:
         return extracted_data
+
+# def get_sales_response(transcript: str, conversation_history: list = None):
+#     if conversation_history is None:
+#         conversation_history = []
+
+#     sales_prompt = f"""You are an expert AI Sales Assistant for a tech company.
+
+# Guide the user through this 5-step sales funnel:
+# 1. QUALIFICATION: Understand their requirements first
+# 2. BUDGET: Ask about budget naturally  
+# 3. PROPOSAL: Suggest best plan based on budget:
+#    - Basic Plan: ₹20,000 (small teams)
+#    - Professional Plan: ₹50,000 (growing businesses)
+#    - Enterprise Plan: Custom pricing (large organizations)
+# 4. MEETING: Propose a demo/meeting
+# 5. CLOSING: Secure commitment
+
+# CRITICAL RULES:
+# - If user asks price at ANY point → immediately give all 3 plans, then ask which fits
+# - Respond in same language as customer (Hindi/English/Hinglish)
+# - Keep responses short (2-3 sentences max)
+# - Always end with a question
+
+# Previous conversation:
+# {json.dumps(conversation_history, ensure_ascii=False)}
+
+# Customer said: {transcript}
+
+# Return ONLY valid JSON:
+# {{
+#     "reply": "your response",
+#     "stage": "QUALIFICATION|BUDGET|PROPOSAL|MEETING|CLOSING",
+#     "suggested_plan": "Basic|Professional|Enterprise|null",
+#     "extracted_data": {{
+#         "name": "",
+#         "phone": "",
+#         "email": "",
+#         "requirement": "",
+#         "budget": "",
+#         "suggested_plan": ""
+#     }}
+# }}"""
+
+#     response = client.chat.completions.create(
+#         model="llama-3.3-70b-versatile",
+#         messages=[{"role": "user", "content": sales_prompt}],
+#         temperature=0.4
+#     )
+
+#     content = response.choices[0].message.content
+#     try:
+#         if content.startswith("```"):
+#             content = content.lstrip("`").lstrip("\n")
+#         if content.endswith("```"):
+#             content = content.rstrip("`").rstrip("\n")
+#         return json.loads(content)
+#     except Exception:
+#         return {"reply": content, "stage": "QUALIFICATION", "extracted_data": {}}
+
+
+def get_sales_response(transcript: str, conversation_history: list = None):
+    if conversation_history is None:
+        conversation_history = []
+        
+    sales_prompt = f"""You are an expert AI Sales Assistant for a tech company. Your job is to drive the conversation forward and never repeat the exact same response or questions.
+
+Guide the user through this strict 5-step sales funnel based on their input:
+1. QUALIFICATION: Understand their app/website requirements.
+2. BUDGET: Ask about their budget range naturally.
+3. PROPOSAL: Match their needs to a plan:
+   - Basic Plan: ₹20,000 (Small apps/single feature)
+   - Professional Plan: ₹50,000 (Clinic/Business apps with booking + management)
+   - Enterprise Plan: Custom pricing (Large scale)
+4. MEETING: Propose a demo/meeting. If they say "today" or a time, acknowledge it instantly.
+5. CLOSING: Confirm everything. If they ask for contact details or next steps here, give them our office support number: +91 98765 43210 and say our team will call them at their specified time.
+
+CRITICAL RULES:
+- If the user asks for pricing at ANY point, immediately list all 3 plans clearly, then ask which one sounds best.
+- If a user has already answered a question (e.g., gave their budget or confirmed the time), DO NOT ask them again. Advance to the next stage.
+- LANGUAGE RULE: Detect customer's language and respond in THE SAME language. Support: English, Hindi, Arabic, French, Spanish, Hinglish.
+  * If customer writes Hindi → reply in Hindi
+  * If customer writes Arabic → reply in Arabic
+  * If customer writes French → reply in French
+  * If customer writes Spanish → reply in Spanish
+  * If customer writes English → reply in English
+  * If customer mixes Hindi+English (Hinglish) → reply in Hinglish
+- Keep responses short and crisp (max 2-3 sentences). Always end with a clear next step or confirmation.
+
+Previous conversation history:
+{json.dumps(conversation_history, ensure_ascii=False)}
+
+Customer said: {transcript}
+
+Return ONLY a valid JSON object. Do not add markdown code blocks like ```json. Match this exact structure:
+{{
+  "reply": "Your conversational response here in customer's language",
+  "detected_language": "English|Hindi|Arabic|French|Spanish|Hinglish",
+  "stage": "QUALIFICATION|BUDGET|PROPOSAL|MEETING|CLOSING",
+  "suggested_plan": "Basic|Professional|Enterprise|null",
+  "extracted_data": {{
+    "requirement": "extract if mentioned",
+    "budget": "extract if mentioned",
+    "suggested_plan": "Basic or Professional or Enterprise"
+  }}
+}}"""
+
+    response = client.chat.completions.create(
+        model="llama-3.3-70b-versatile",
+        messages=[{"role": "user", "content": sales_prompt}],
+        temperature=0.3
+    )
+    
+    content = response.choices[0].message.content
+    try:
+        if content.startswith("```"):
+            content = content.lstrip("`").lstrip("json").lstrip("\n")
+        if content.endswith("```"):
+            content = content.rstrip("`").rstrip("\n")
+        return json.loads(content)
+    except Exception:
+        return {
+            "reply": content,
+            "detected_language": "English",
+            "stage": "QUALIFICATION",
+            "suggested_plan": None,
+            "extracted_data": {}
+        }

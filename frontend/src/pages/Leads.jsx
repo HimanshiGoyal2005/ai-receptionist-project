@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import API from "../services/api";
 
 // Modern glowing tags based on status
@@ -25,7 +26,9 @@ function Leads() {
   const filtered = leads.filter(
     (l) =>
       l.name?.toLowerCase().includes(search.toLowerCase()) ||
-      l.phone?.includes(search),
+      l.phone?.includes(search) ||
+      l.industry?.toLowerCase().includes(search.toLowerCase()) ||
+      l.lead_score?.toLowerCase().includes(search.toLowerCase()),
   );
 
   return (
@@ -110,8 +113,11 @@ function Leads() {
                     "Phone",
                     "Requirement",
                     "Budget",
+                    "Industry",
+                    "Lead Score",
                     "Status",
                     "Date",
+                    "Thread",
                   ].map((h) => (
                     <th
                       key={h}
@@ -140,6 +146,12 @@ function Leads() {
                     <td className="px-6 py-4 font-semibold text-gray-200">
                       {lead.budget ? `₹${lead.budget}` : "—"}
                     </td>
+                    <td className="px-6 py-4 text-gray-300">
+                      {lead.industry || "—"}
+                    </td>
+                    <td className="px-6 py-4 text-gray-300 font-semibold">
+                      {lead.lead_score || "Cold Lead"}
+                    </td>
                     <td className="px-6 py-4">
                       <span
                         className={`px-2.5 py-1 rounded-md text-[11px] font-bold tracking-wide uppercase ${statusStyles[lead.status] || "bg-gray-800 text-gray-400"}`}
@@ -158,6 +170,14 @@ function Leads() {
                             },
                           )
                         : "—"}
+                    </td>
+                    <td className="px-6 py-4">
+                      <Link
+                        to={`/conversations/${lead.id}`}
+                        className="inline-flex items-center justify-center rounded-md bg-blue-500/10 border border-blue-500/20 px-3 py-1.5 text-xs font-semibold text-blue-300 hover:bg-blue-500/15 transition-colors"
+                      >
+                        View
+                      </Link>
                     </td>
                   </tr>
                 ))}

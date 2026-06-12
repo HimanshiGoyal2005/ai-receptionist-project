@@ -1,30 +1,289 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import API from "../services/api";
 
-function Login() {
-  const [isRegistering, setIsRegistering] = useState(false);
+/* ── 🌊 3D Cyber Mesh Wave Canvas Background ── */
+function WaveMeshCanvas() {
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const canvas = ref.current;
+    const ctx = canvas.getContext("2d");
+    let raf;
+
+    const resize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    resize();
+    window.addEventListener("resize", resize);
+
+    // Wave Configurations (Amplitudes, frequencies, speeds, colors)
+    const waves = [
+      {
+        amplitude: 45,
+        frequency: 0.004,
+        speed: 0.02,
+        color: "rgba(99, 102, 241, 0.15)",
+        lineWidth: 2,
+      },
+      {
+        amplitude: 30,
+        frequency: 0.007,
+        speed: 0.03,
+        color: "rgba(6, 182, 212, 0.12)",
+        lineWidth: 1.5,
+      },
+      {
+        amplitude: 20,
+        frequency: 0.012,
+        speed: 0.015,
+        color: "rgba(139, 92, 246, 0.08)",
+        lineWidth: 1,
+      },
+    ];
+
+    let phase = 0;
+
+    const draw = () => {
+      const { width: W, height: H } = canvas;
+      ctx.clearRect(0, 0, W, H);
+
+      // Deep Space vignette layer
+      const bgGlow = ctx.createRadialGradient(
+        W / 2,
+        H / 2,
+        10,
+        W / 2,
+        H / 2,
+        W,
+      );
+      bgGlow.addColorStop(0, "#070a15");
+      bgGlow.addColorStop(1, "#02040a");
+      ctx.fillStyle = bgGlow;
+      ctx.fillRect(0, 0, W, H);
+
+      phase += 0.5; // Controls flow velocity over ticks
+
+      // Render Each Layer of 3D Sine Waves
+      waves.forEach((w) => {
+        ctx.beginPath();
+        ctx.strokeStyle = w.color;
+        ctx.lineWidth = w.lineWidth;
+
+        // Draw horizontal wave streams
+        for (let x = 0; x < W; x += 2) {
+          // Trigonometric sine-wave interpolation equations
+          const y =
+            H * 0.65 +
+            Math.sin(x * w.frequency + phase * w.speed) *
+              w.amplitude *
+              Math.cos(x * 0.001);
+          if (x === 0) {
+            ctx.moveTo(x, y);
+          } else {
+            ctx.lineTo(x, y);
+          }
+        }
+        ctx.stroke();
+
+        // Optional Vertical Mesh Lines Effect (Creates the 3D grid alignment layout)
+        ctx.beginPath();
+        ctx.strokeStyle = w.color.replace(/[\d.]+\)$/, "0.02)"); // Super faint lines
+        for (let x = 0; x < W; x += 60) {
+          const y =
+            H * 0.65 +
+            Math.sin(x * w.frequency + phase * w.speed) *
+              w.amplitude *
+              Math.cos(x * 0.001);
+          ctx.moveTo(x, H);
+          ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+      });
+
+      raf = requestAnimationFrame(draw);
+    };
+
+    draw();
+
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener("resize", resize);
+    };
+  }, []);
+
+  return (
+    <canvas
+      ref={ref}
+      style={{ position: "fixed", inset: 0, zIndex: 0, pointerEvents: "none" }}
+    />
+  );
+}
+
+/* ── Feature pill ── */
+function Feat({ grad, emoji, title, sub }) {
+  const [hov, setHov] = useState(false);
+  return (
+    <div
+      onMouseEnter={() => setHov(true)}
+      onMouseLeave={() => setHov(false)}
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 16,
+        padding: "15px 20px",
+        borderRadius: 16,
+        border: hov
+          ? "1px solid rgba(139,92,246,0.25)"
+          : "1px solid rgba(255,255,255,0.05)",
+        background: hov ? "rgba(139,92,246,0.06)" : "rgba(255,255,255,0.02)",
+        backdropFilter: "blur(12px)",
+        transform: hov ? "translateX(6px)" : "translateX(0)",
+        transition: "all 0.28s ease",
+        cursor: "default",
+      }}
+    >
+      <div
+        style={{
+          width: 44,
+          height: 44,
+          borderRadius: 13,
+          flexShrink: 0,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          fontSize: 20,
+          background: grad,
+          boxShadow: hov ? "0 0 20px rgba(139,92,246,0.3)" : "none",
+          transition: "box-shadow 0.28s ease",
+        }}
+      >
+        {emoji}
+      </div>
+      <div>
+        <p
+          style={{
+            fontSize: 13,
+            fontWeight: 600,
+            color: "#f1f5f9",
+            margin: 0,
+            letterSpacing: "-0.01em",
+          }}
+        >
+          {title}
+        </p>
+        <p
+          style={{
+            fontSize: 11,
+            color: "#475569",
+            margin: "2px 0 0",
+            lineHeight: 1.5,
+          }}
+        >
+          {sub}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+/* ── Animated input ── */
+function Field({ label, type, value, onChange, placeholder }) {
+  const [foc, setFoc] = useState(false);
+  const icons = { text: "👤", email: "✉️", password: "🔒" };
+  return (
+    <div style={{ marginBottom: 16 }}>
+      <label
+        style={{
+          display: "block",
+          fontSize: "10px",
+          fontWeight: 700,
+          letterSpacing: "0.1em",
+          textTransform: "uppercase",
+          color: foc ? "#818cf8" : "#3f4e63",
+          marginBottom: 7,
+          transition: "color 0.2s",
+        }}
+      >
+        {label}
+      </label>
+      <div style={{ position: "relative" }}>
+        <span
+          style={{
+            position: "absolute",
+            left: 13,
+            top: "50%",
+            transform: "translateY(-50%)",
+            fontSize: 13,
+            pointerEvents: "none",
+            zIndex: 2,
+            opacity: foc ? 1 : 0.35,
+            transition: "opacity 0.2s",
+          }}
+        >
+          {icons[type] || "📝"}
+        </span>
+        <input
+          type={type}
+          value={value}
+          onChange={onChange}
+          placeholder={placeholder}
+          onFocus={() => setFoc(true)}
+          onBlur={() => setFoc(false)}
+          style={{
+            width: "100%",
+            padding: "12px 14px 12px 38px",
+            borderRadius: 12,
+            border: foc
+              ? "1px solid rgba(129,140,248,0.5)"
+              : "1px solid rgba(255,255,255,0.07)",
+            background: foc
+              ? "rgba(129,140,248,0.05)"
+              : "rgba(255,255,255,0.03)",
+            boxShadow: foc ? "0 0 0 3px rgba(129,140,248,0.1)" : "none",
+            color: "#f1f5f9",
+            fontSize: 13,
+            outline: "none",
+            transition: "all 0.22s ease",
+            fontFamily: "inherit",
+          }}
+        />
+      </div>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════ MAIN ══════════════════════════════════════════ */
+export default function Login() {
+  const [isReg, setIsReg] = useState(false);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [pass, setPass] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
+  const switchMode = (reg) => {
+    setIsReg(reg);
+    setError("");
+    setName("");
+    setEmail("");
+    setPass("");
+  };
+
   const handleAuth = async (e) => {
-    e.preventDefault();
+    e?.preventDefault();
     setError("");
     setLoading(true);
-
     try {
-      if (isRegistering) {
-        // Register Pipeline Action
-        const payload = { name, email, password };
-        const res = await API.post("/api/auth/register", payload, {
-          headers: { "Content-Type": "application/json" },
-        });
-
-        if (res.data && res.data.token) {
+      if (isReg) {
+        const res = await API.post(
+          "/api/auth/register",
+          { name, email, password: pass },
+          { headers: { "Content-Type": "application/json" } },
+        );
+        if (res.data?.token) {
           localStorage.setItem("token", res.data.token);
           localStorage.setItem(
             "user",
@@ -34,19 +293,16 @@ function Login() {
             `Bearer ${res.data.token}`;
           navigate("/", { replace: true });
         } else {
-          setIsRegistering(false);
-          setError(
-            "Account provisioned successfully! Please initialize session.",
-          );
+          switchMode(false);
+          setError("Account provisioned! Please initialize session.");
         }
       } else {
-        // Login Pipeline Action
-        const payload = { email, password };
-        const res = await API.post("/api/auth/login", payload, {
-          headers: { "Content-Type": "application/json" },
-        });
-
-        if (res.data && res.data.token) {
+        const res = await API.post(
+          "/api/auth/login",
+          { email, password: pass },
+          { headers: { "Content-Type": "application/json" } },
+        );
+        if (res.data?.token) {
           localStorage.setItem("token", res.data.token);
           localStorage.setItem(
             "user",
@@ -60,245 +316,501 @@ function Login() {
         }
       }
     } catch (err) {
-      console.error("Auth Error details:", err.response?.data || err.message);
-      const backendMessage = err.response?.data?.detail;
       setError(
-        backendMessage || "Operation rejected. Please check credentials again.",
+        err.response?.data?.detail || "Operation rejected. Check credentials.",
       );
     } finally {
       setLoading(false);
     }
   };
 
-  const handleStateToggle = () => {
-    setIsRegistering(!isRegistering);
-    setError("");
-    setName("");
-    setEmail("");
-    setPassword("");
-  };
-
   return (
-    <div
-      className="min-h-screen flex font-sans antialiased text-slate-200"
-      style={{ backgroundColor: "#070A13" }}
-    >
-      {/* LEFT SECTION: Premium Branding & Dynamic 3D Glow Concept */}
-      <div className="hidden lg:flex lg:w-1/2 relative items-center justify-center p-12 overflow-hidden border-r border-slate-900/50">
-        <div
-          className="absolute top-[-10%] right-[-10%] w-[500px] h-[500px] rounded-full opacity-20 blur-[120px]"
-          style={{
-            background: "radial-gradient(circle, #6366f1 0%, transparent 70%)",
-          }}
-        />
-        <div
-          className="absolute bottom-[-10%] left-[-10%] w-[400px] h-[400px] rounded-full opacity-15 blur-[100px]"
-          style={{
-            background: "radial-gradient(circle, #06b6d4 0%, transparent 70%)",
-          }}
-        />
-        <div
-          className="absolute w-[300px] h-[300px] rounded-full opacity-10 blur-[80px]"
-          style={{
-            background: "radial-gradient(circle, #a855f7 0%, transparent 70%)",
-          }}
-        />
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff03_1px,transparent_1px),linear-gradient(to_bottom,#ffffff03_1px,transparent_1px)] bg-[size:40px_40px]" />
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500&display=swap');
+        * { box-sizing:border-box; margin:0; padding:0; }
+        body { background:#04060f; overflow-x: hidden; }
+        input::placeholder { color:#2d3a4d; }
+        @keyframes shimmer { 0%{transform:translateX(-120%)} 100%{transform:translateX(220%)} }
+        @keyframes pulseDot { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.35;transform:scale(0.65)} }
+        @keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes spin { to{transform:rotate(360deg)} }
+        .login-left  { display:flex; }
+        .feat-section { display:flex; }
+        @media(max-width:860px){ .login-left{display:none!important;} }
+      `}</style>
 
-        <div className="relative z-10 max-w-lg w-full space-y-8">
-          <div className="space-y-3">
-            <span className="px-3 py-1 text-xs font-semibold uppercase tracking-widest text-indigo-400 bg-indigo-500/10 border border-indigo-500/20 rounded-full inline-block backdrop-blur-md shadow-[0_0_15px_rgba(99,102,241,0.15)]">
+      {/* 🌊 Replaced OrbCanvas with 3D Flowing WaveMeshCanvas */}
+      <WaveMeshCanvas />
+
+      {/* ── Outer shell: true 50/50 split ── */}
+      <div
+        style={{
+          minHeight: "100vh",
+          display: "flex",
+          fontFamily: "'Space Grotesk', 'Inter', sans-serif",
+          color: "#e2e8f0",
+          position: "relative",
+          zIndex: 1,
+        }}
+      >
+        {/* ══ LEFT 50% ══ */}
+        <div
+          className="login-left"
+          style={{
+            width: "50%",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "64px 56px",
+            borderRight: "1px solid rgba(255,255,255,0.04)",
+            position: "relative",
+            zIndex: 1,
+            animation: "fadeUp 0.6s ease both",
+          }}
+        >
+          <div style={{ maxWidth: 480, width: "100%" }}>
+            {/* Badge */}
+            <div
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 7,
+                padding: "5px 16px",
+                borderRadius: 100,
+                border: "1px solid rgba(139,92,246,0.28)",
+                background: "rgba(139,92,246,0.07)",
+                fontSize: 10,
+                fontWeight: 700,
+                letterSpacing: "0.13em",
+                textTransform: "uppercase",
+                color: "#a78bfa",
+                marginBottom: 32,
+              }}
+            >
+              <span
+                style={{
+                  width: 5,
+                  height: 5,
+                  borderRadius: "50%",
+                  background: "#a78bfa",
+                  animation: "pulseDot 2s ease-in-out infinite",
+                  display: "inline-block",
+                }}
+              />
               Next-Gen Cognitive Architecture
-            </span>
-            <h1 className="text-5xl font-black tracking-tight text-white leading-tight">
-              AI VOICE <br />
-              <span className="bg-gradient-to-r from-indigo-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent drop-shadow-[0_2px_10px_rgba(6,182,212,0.15)]">
+            </div>
+
+            {/* Hero headline */}
+            <h1
+              style={{
+                fontSize: "clamp(40px,3.6vw,60px)",
+                fontWeight: 800,
+                lineHeight: 1.06,
+                letterSpacing: "-0.035em",
+                color: "#f8fafc",
+                marginBottom: 18,
+              }}
+            >
+              AI VOICE
+              <br />
+              <span
+                style={{
+                  background:
+                    "linear-gradient(130deg,#818cf8 0%,#c084fc 45%,#22d3ee 100%)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  backgroundClip: "text",
+                }}
+              >
                 RECEPTIONIST
               </span>
             </h1>
-            <p className="text-slate-400 text-lg leading-relaxed font-light">
+
+            <p
+              style={{
+                fontSize: 15,
+                color: "#4b5a70",
+                lineHeight: 1.75,
+                fontWeight: 400,
+                maxWidth: 400,
+                marginBottom: 52,
+                fontFamily: "'Inter',sans-serif",
+              }}
+            >
               Automate customer operations with intelligent voice pipelines,
               real-time intent extraction, and automated lead management.
             </p>
-          </div>
 
-          <div className="grid gap-4 mt-12">
-            <div className="flex items-center gap-4 p-4 rounded-xl border border-slate-800/40 bg-white/[0.02] backdrop-blur-md transition-all duration-300 hover:border-slate-700/60 hover:bg-white/[0.02]">
-              <div className="w-10 h-10 rounded-lg flex items-center justify-center text-xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-[0_0_15px_rgba(99,102,241,0.3)]">
-                🎙️
-              </div>
-              <div>
-                <h3 className="font-semibold text-white text-sm">
-                  Ultra-Low Latency STT Pipeline
-                </h3>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Whisper-backed contextual speech processing.
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-4 p-4 rounded-xl border border-slate-800/40 bg-white/[0.02] backdrop-blur-md transition-all duration-300 hover:border-slate-700/60 hover:bg-white/[0.02]">
-              <div className="w-10 h-10 rounded-lg flex items-center justify-center text-xl bg-gradient-to-br from-purple-500 to-pink-600 shadow-[0_0_15px_rgba(168,85,247,0.3)]">
-                🧠
-              </div>
-              <div>
-                <h3 className="font-semibold text-white text-sm">
-                  Cognitive Intent Detection
-                </h3>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Extract leads, budgets, and structure records dynamically.
-                </p>
-              </div>
+            {/* Feature cards */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              <Feat
+                grad="linear-gradient(135deg,#4f46e5,#7c3aed)"
+                emoji="🎙️"
+                title="Ultra-Low Latency STT Pipeline"
+                sub="Whisper-backed contextual speech processing."
+              />
+              <Feat
+                grad="linear-gradient(135deg,#7c3aed,#c026d3)"
+                emoji="🧠"
+                title="Cognitive Intent Detection"
+                sub="Extract leads, budgets, and structure records dynamically."
+              />
+              <Feat
+                grad="linear-gradient(135deg,#0891b2,#0e7490)"
+                emoji="📊"
+                title="Automated Lead Management"
+                sub="CRM-ready pipeline with zero manual touchpoints."
+              />
             </div>
           </div>
         </div>
-      </div>
 
-      {/* RIGHT SECTION: Form Control Dashboard Wrapper */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 md:p-12 relative">
-        <div className="lg:hidden absolute top-10 left-1/2 -translate-x-1/2 w-72 h-72 rounded-full opacity-10 blur-3xl bg-indigo-500" />
+        {/* ══ RIGHT 50% ══ */}
+        <div
+          style={{
+            width: "50%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "48px 40px",
+            position: "relative",
+            zIndex: 1,
+            animation: "fadeUp 0.6s 0.1s ease both",
+          }}
+          className="login-right"
+        >
+          <div style={{ width: "100%", maxWidth: 440 }}>
+            {/* ── Glass form card ── */}
+            <div
+              style={{
+                borderRadius: 24,
+                border: "1px solid rgba(255,255,255,0.08)",
+                background: "rgba(10,14,26,0.78)",
+                backdropFilter: "blur(50px)",
+                WebkitBackdropFilter: "blur(50px)",
+                padding: "40px 40px 36px",
+                position: "relative",
+                overflow: "hidden",
+                boxShadow: "0 20px 40px rgba(0,0,0,0.4)",
+              }}
+            >
+              {/* Top glow bar */}
+              <div
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  height: 1,
+                  background:
+                    "linear-gradient(90deg,transparent 0%,rgba(139,92,246,0.55) 50%,transparent 100%)",
+                }}
+              />
 
-        <div className="w-full max-w-md relative">
-          <div className="rounded-2xl p-8 md:p-10 border border-slate-800/60 bg-white/[0.02] backdrop-blur-xl shadow-[0_30px_60px_rgba(0,0,0,0.4)]">
-            {/* Switchable Headings */}
-            <div className="mb-8">
-              <h2 className="text-2xl font-bold text-white tracking-tight">
-                {isRegistering ? "Provision Terminal Asset" : "Welcome Back"}
+              {/* Corner bloom */}
+              <div
+                style={{
+                  position: "absolute",
+                  top: -100,
+                  right: -100,
+                  width: 240,
+                  height: 240,
+                  borderRadius: "50%",
+                  background:
+                    "radial-gradient(circle,rgba(6,182,212,0.12) 0%,transparent 70%)",
+                  pointerEvents: "none",
+                }}
+              />
+
+              {/* Heading */}
+              <h2
+                style={{
+                  fontSize: 24,
+                  fontWeight: 700,
+                  color: "#f8fafc",
+                  letterSpacing: "-0.025em",
+                }}
+              >
+                {isReg ? "Create Account" : "Welcome Back"}
               </h2>
-              <p className="text-xs text-slate-500 mt-1">
-                {isRegistering
-                  ? "Initialize a new administrative node structure"
-                  : "Enter your terminal credentials below"}
+              <p
+                style={{
+                  fontSize: 12,
+                  color: "#3f4e63",
+                  marginTop: 5,
+                  marginBottom: 28,
+                  fontFamily: "'Inter',sans-serif",
+                }}
+              >
+                {isReg
+                  ? "Initialize a new administrative node"
+                  : "Enter your credentials to continue"}
               </p>
-            </div>
 
-            <form onSubmit={handleAuth} className="space-y-5">
-              {/* Conditional Name Input Render */}
-              {isRegistering && (
-                <div className="space-y-2">
-                  <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest block">
-                    Full Node Identity (Name)
-                  </label>
-                  <input
+              {/* Tab switcher */}
+              <div
+                style={{
+                  display: "flex",
+                  gap: 3,
+                  padding: 3,
+                  background: "rgba(255,255,255,0.03)",
+                  border: "1px solid rgba(255,255,255,0.06)",
+                  borderRadius: 12,
+                  marginBottom: 28,
+                }}
+              >
+                {["Sign In", "Create Account"].map((lbl, i) => {
+                  const active = i === 0 ? !isReg : isReg;
+                  return (
+                    <button
+                      key={lbl}
+                      onClick={() => switchMode(i === 1)}
+                      style={{
+                        flex: 1,
+                        padding: "9px 0",
+                        borderRadius: 9,
+                        fontSize: 12,
+                        fontWeight: 600,
+                        fontFamily: "inherit",
+                        cursor: "pointer",
+                        border: active
+                          ? "1px solid rgba(139,92,246,0.3)"
+                          : "none",
+                        background: active
+                          ? "rgba(139,92,246,0.14)"
+                          : "transparent",
+                        color: active ? "#a78bfa" : "#3f4e63",
+                        transition: "all 0.22s ease",
+                      }}
+                    >
+                      {lbl}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Form */}
+              <form onSubmit={handleAuth}>
+                {isReg && (
+                  <Field
+                    label="Full Name"
                     type="text"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    placeholder="Enter your full name"
-                    className="w-full rounded-xl px-4 py-3 text-sm text-white placeholder-slate-700 outline-none transition-all border border-slate-800/80 bg-slate-950/40 focus:border-indigo-500/60 focus:bg-slate-950/80 focus:ring-4 focus:ring-indigo-500/10"
-                    required
+                    placeholder="Your full name"
                   />
-                </div>
-              )}
-
-              {/* Email Input */}
-              <div className="space-y-2">
-                <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest block">
-                  Email Terminal
-                </label>
-                <input
+                )}
+                <Field
+                  label="Email Address"
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Enter your email address"
-                  className="w-full rounded-xl px-4 py-3 text-sm text-white placeholder-slate-700 outline-none transition-all border border-slate-800/80 bg-slate-950/40 focus:border-indigo-500/60 focus:bg-slate-950/80 focus:ring-4 focus:ring-indigo-500/10"
-                  required
+                  placeholder="you@company.com"
                 />
-              </div>
-
-              {/* Password Input */}
-              <div className="space-y-2">
-                <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest block">
-                  Security Passphrase
-                </label>
-                <input
+                <Field
+                  label="Password"
                   type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  value={pass}
+                  onChange={(e) => setPass(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full rounded-xl px-4 py-3 text-sm text-white placeholder-slate-700 outline-none transition-all border border-slate-800/80 bg-slate-950/40 focus:border-indigo-500/60 focus:bg-slate-950/80 focus:ring-4 focus:ring-indigo-500/10"
-                  required
                 />
-              </div>
 
-              {error && (
-                <div className="px-4 py-3 rounded-xl text-xs flex items-center gap-2 border border-red-500/20 bg-red-500/10 text-red-400 backdrop-blur-sm">
-                  <span>⚠️</span> {error}
-                </div>
-              )}
+                {error && (
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 8,
+                      padding: "10px 14px",
+                      borderRadius: 10,
+                      marginBottom: 16,
+                      border: "1px solid rgba(239,68,68,0.2)",
+                      background: "rgba(239,68,68,0.06)",
+                      color: "#f87171",
+                      fontSize: 12,
+                      fontFamily: "'Inter',sans-serif",
+                    }}
+                  >
+                    ⚠️ {error}
+                  </div>
+                )}
 
-              {/* Action Trigger Button */}
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full py-3.5 rounded-xl text-sm font-semibold text-white tracking-wide transition-all duration-300 transform active:scale-[0.98] relative overflow-hidden disabled:opacity-50 disabled:cursor-not-allowed group"
+                {/* CTA */}
+                <button
+                  type="submit"
+                  disabled={loading}
+                  style={{
+                    width: "100%",
+                    padding: "14px",
+                    marginTop: 4,
+                    borderRadius: 13,
+                    border: "none",
+                    fontSize: 13,
+                    fontWeight: 700,
+                    fontFamily: "inherit",
+                    letterSpacing: "0.025em",
+                    color: "#fff",
+                    cursor: loading ? "not-allowed" : "pointer",
+                    opacity: loading ? 0.55 : 1,
+                    background:
+                      "linear-gradient(130deg,#6366f1 0%,#8b5cf6 55%,#0ea5e9 100%)",
+                    boxShadow: "0 6px 24px rgba(99,102,241,0.28)",
+                    position: "relative",
+                    overflow: "hidden",
+                    transition: "all 0.3s ease",
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!loading) {
+                      e.currentTarget.style.transform = "translateY(-1px)";
+                      e.currentTarget.style.boxShadow =
+                        "0 12px 36px rgba(99,102,241,0.38)";
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = "translateY(0)";
+                    e.currentTarget.style.boxShadow =
+                      "0 6px 24px rgba(99,102,241,0.28)";
+                  }}
+                >
+                  {/* shimmer sweep */}
+                  {!loading && (
+                    <div
+                      style={{
+                        position: "absolute",
+                        inset: 0,
+                        pointerEvents: "none",
+                        background:
+                          "linear-gradient(105deg,transparent 35%,rgba(255,255,255,0.13) 50%,transparent 65%)",
+                        animation: "shimmer 2.8s ease-in-out infinite",
+                      }}
+                    />
+                  )}
+                  <span
+                    style={{
+                      position: "relative",
+                      zIndex: 1,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: 8,
+                    }}
+                  >
+                    {loading ? (
+                      <>
+                        <span
+                          style={{
+                            width: 14,
+                            height: 14,
+                            border: "2px solid rgba(255,255,255,0.25)",
+                            borderTopColor: "#fff",
+                            borderRadius: "50%",
+                            animation: "spin 0.65s linear infinite",
+                            display: "inline-block",
+                          }}
+                        />
+                        {isReg ? "Assembling Node..." : "Verifying Token..."}
+                      </>
+                    ) : isReg ? (
+                      "Instantiate Account →"
+                    ) : (
+                      "Initialize Session →"
+                    )}
+                  </span>
+                </button>
+              </form>
+
+              {/* Toggle */}
+              <p
                 style={{
-                  background:
-                    "linear-gradient(135deg, #6366f1 0%, #a855f7 50%, #06b6d4 100%)",
-                  boxShadow:
-                    "0 4px 20px rgba(99,102,241,0.25), inset 0 1px 0 rgba(255,255,255,0.2)",
+                  marginTop: 20,
+                  textAlign: "center",
+                  fontSize: 12,
+                  color: "#3f4e63",
+                  fontFamily: "'Inter',sans-serif",
                 }}
               >
-                <div className="absolute inset-0 w-1/2 h-full bg-white/10 skew-x-[-25deg] transition-all duration-1000 -translate-x-full group-hover:translate-x-[300%]" />
-                <span className="relative z-10 flex items-center justify-center gap-2">
-                  {loading ? (
-                    <>
-                      <svg
-                        className="animate-spin h-4 w-4 text-white"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                      >
-                        <circle
-                          className="opacity-25"
-                          cx="12"
-                          cy="12"
-                          r="10"
-                          stroke="currentColor"
-                          strokeWidth="4"
-                        />
-                        <path
-                          className="opacity-75"
-                          fill="currentColor"
-                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                        />
-                      </svg>
-                      {isRegistering
-                        ? "Assembling Node Structure..."
-                        : "Verifying Token Core..."}
-                    </>
-                  ) : isRegistering ? (
-                    "Instantiate Account →"
-                  ) : (
-                    "Initialize Session →"
-                  )}
-                </span>
-              </button>
-            </form>
-
-            {/* View Switching Anchor Toggle */}
-            <div className="mt-5 text-center">
-              <p className="text-xs text-slate-500">
-                {isRegistering
-                  ? "Already possess core terminal parameters?"
-                  : "Fresh system instance configuration required?"}{" "}
+                {isReg
+                  ? "Already have an account? "
+                  : "Don't have an account? "}
                 <button
-                  type="button"
-                  onClick={handleStateToggle}
-                  className="text-indigo-400 font-semibold hover:text-indigo-300 hover:underline transition-all outline-none bg-transparent border-none p-0 cursor-pointer"
+                  onClick={() => switchMode(!isReg)}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    padding: 0,
+                    color: "#818cf8",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    fontFamily: "inherit",
+                    fontSize: "inherit",
+                    transition: "color 0.2s",
+                  }}
+                  onMouseEnter={(e) =>
+                    (e.currentTarget.style.color = "#a78bfa")
+                  }
+                  onMouseLeave={(e) =>
+                    (e.currentTarget.style.color = "#818cf8")
+                  }
                 >
-                  {isRegistering ? "Access Session" : "Provision Sub-Node"}
+                  {isReg ? "Sign in" : "Create one"}
                 </button>
               </p>
-            </div>
-          </div>
 
-          <div className="mt-8 text-center">
-            <p className="text-[10px] uppercase font-bold tracking-widest text-slate-600">
+              {/* Divider */}
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 12,
+                  margin: "22px 0 0",
+                }}
+              >
+                <div
+                  style={{
+                    flex: 1,
+                    height: 1,
+                    background: "rgba(255,255,255,0.05)",
+                  }}
+                />
+                <span
+                  style={{
+                    fontSize: 9,
+                    color: "#1e2a3a",
+                    letterSpacing: "0.1em",
+                    textTransform: "uppercase",
+                    fontWeight: 700,
+                  }}
+                >
+                  Secured Console
+                </span>
+                <div
+                  style={{
+                    flex: 1,
+                    height: 1,
+                    background: "rgba(255,255,255,0.05)",
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* Footer */}
+            <p
+              style={{
+                marginTop: 24,
+                textAlign: "center",
+                fontSize: 9,
+                color: "#1a2333",
+                letterSpacing: "0.14em",
+                textTransform: "uppercase",
+                fontWeight: 700,
+              }}
+            >
               Secured Hypertext Console System Engine
             </p>
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
-
-export default Login;

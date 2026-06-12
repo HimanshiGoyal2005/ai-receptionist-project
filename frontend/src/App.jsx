@@ -3,9 +3,10 @@ import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Leads from "./pages/Leads";
 import Conversations from "./pages/Conversations";
+import ConversationThread from "./pages/ConversationThread";
 import Appointments from "./pages/Appointments";
 import Layout from "./components/Layout";
-
+import SalesAgent from "./pages/SalesAgent";
 function App() {
   const isLoggedIn = localStorage.getItem("user");
 
@@ -21,9 +22,14 @@ function App() {
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="leads" element={<Leads />} />
           <Route path="conversations" element={<Conversations />} />
+          <Route
+            path="conversations/:leadId"
+            element={<ConversationThread />}
+          />
+          <Route path="sales" element={<SalesAgent />} />
           <Route path="appointments" element={<Appointments />} />
         </Route>
-        <Route path="*" element={<Navigate to="/" />} />
+        <Route path="*" element={<Navigate to="/login" />} />
       </Routes>
     </BrowserRouter>
   );

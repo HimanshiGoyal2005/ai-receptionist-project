@@ -1,8 +1,9 @@
 import os
 import re
 import uuid
+import json
 from datetime import datetime, timedelta
-from fastapi import APIRouter, Depends, UploadFile, File, HTTPException
+from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, Request
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -11,7 +12,7 @@ from app.models.conversation import Conversation
 from app.models.appointment import Appointment
 from app.models.call_log import CallLog
 from app.services.stt_service import transcribe_audio
-from app.services.llm_service import get_llm_response, normalize_lead_data
+from app.services.llm_service import get_llm_response, normalize_lead_data, get_sales_response
 from app.services.tts_service import text_to_speech
 from app.utils.logger import get_logger
 
@@ -124,6 +125,7 @@ async def process_call(
         ai_reply = llm_result["reply"]
         extracted = llm_result.get("extracted_data", {})
         extracted = normalize_lead_data(extracted)
+        extracted["lead_score"] = llm_result.get("lead_score", extracted.get("lead_score", "Cold Lead"))
 
         # Fallback: detect appointment date/time directly from transcript
         parsed_date, parsed_time = parse_appointment_from_transcript(transcript)
@@ -145,7 +147,16 @@ async def process_call(
             ).first()
 
             if existing_lead:
-                for field in ["name", "email", "requirement", "budget", "timeline"]:
+                for field in [
+                    "name",
+                    "email",
+                    "requirement",
+                    "budget",
+                    "timeline",
+                    "team_size",
+                    "industry",
+                    "lead_score",
+                ]:
                     if extracted.get(field):
                         setattr(existing_lead, field, extracted[field])
                 db.commit()
@@ -159,6 +170,9 @@ async def process_call(
                     requirement=extracted.get("requirement"),
                     budget=extracted.get("budget"),
                     timeline=extracted.get("timeline"),
+                    team_size=extracted.get("team_size"),
+                    industry=extracted.get("industry"),
+                    lead_score=extracted.get("lead_score"),
                     status="new",
                     source="ai_call"
                 )
@@ -220,3 +234,40 @@ async def process_call(
     except Exception as e:
         logger.error(f"Call processing failed: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# ═════════════════════════════════════════════════════════════
+# 🤖 ADDED: TEXT-BASED SALES AGENT INTERFACE CHANNEL
+# ═════════════════════════════════════════════════════════════
+@router.post("/chat")
+async def sales_agent_text_chat(request: Request, db: Session = Depends(get_db)):
+    """
+    Dedicated Sales Agent workspace orchestration engine.
+    Processes live conversational streams bypassing static audio parameters.
+    """
+    try:
+        body = await request.json()
+        transcript = body.get("message", "").strip()
+        conversation_history = body.get("history", [])
+
+        if not transcript:
+            raise HTTPException(status_code=400, detail="Message context token is empty")
+
+        # Delegate execution down to our updated Llama 3.3 pipeline handler
+        sales_data = get_sales_response(transcript, conversation_history)
+        
+        # Pipeline synchronization hooks for automated database records
+        extracted = sales_data.get("extracted_data", {})
+        
+        # Real-time state machine triggers matching frontend bindings
+        return {
+            "reply": sales_data.get("reply", ""),
+            "stage": sales_data.get("stage", "QUALIFICATION"),
+            "detected_language": sales_data.get("detected_language", "English"),
+            "suggested_plan": sales_data.get("suggested_plan", None),
+            "extracted_data": extracted
+        }
+
+    except Exception as err:
+        logger.error(f"Sales Agent text workspace pipeline dropped: {str(err)}")
+        raise HTTPException(status_code=500, detail=str(err))

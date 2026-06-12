@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 
@@ -12,13 +12,12 @@ router = APIRouter(prefix="/api/conversations", tags=["Conversations"])
 
 
 @router.get("")
-def get_conversations(db: Session = Depends(get_db)):
-    conversations = (
-        db.query(Conversation, Lead)
-        .outerjoin(Lead, Conversation.lead_id == Lead.id)
-        .order_by(Conversation.created_at.desc())
-        .all()
-    )
+def get_conversations(lead_id: int | None = Query(None), db: Session = Depends(get_db)):
+    query = db.query(Conversation, Lead).outerjoin(Lead, Conversation.lead_id == Lead.id)
+    if lead_id is not None:
+        query = query.filter(Conversation.lead_id == lead_id)
+
+    conversations = query.order_by(Conversation.created_at.desc()).all()
 
     result = []
     for conv, lead in conversations:
@@ -26,6 +25,7 @@ def get_conversations(db: Session = Depends(get_db)):
             "id": conv.id,
             "lead": lead.name if lead else None,
             "phone": lead.phone if lead else None,
+            "lead_id": lead.id if lead else conv.lead_id,
             "intent": conv.intent,
             "sentiment": conv.sentiment,
             "date": conv.created_at.strftime("%Y-%m-%d %I:%M %p") if conv.created_at else None,

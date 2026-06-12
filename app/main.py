@@ -1,5 +1,5 @@
 import os
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
@@ -10,6 +10,7 @@ from app.api.call_api import router as call_router
 from app.api.analytics_api import router as analytics_router
 from app.api.conversations_api import router as conversations_router
 from app.api.auth_api import router as auth_router
+from app.services.llm_service import get_sales_response
 from app.utils.logger import get_logger
 
 logger = get_logger("main")
@@ -33,6 +34,7 @@ app.add_middleware(
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
+# Core Routers Integration
 app.include_router(auth_router)
 app.include_router(leads_router)
 app.include_router(appointments_router)
@@ -52,3 +54,27 @@ def on_startup():
 def health_check():
     logger.info("Health check called")
     return {"status": "ok", "message": "AI Voice Receptionist is running!", "version": "2.0.0"}
+
+
+# ═════════════════════════════════════════════════════════════
+# 🤖 STANDALONE SALES AGENT ENDPOINT WIRING
+# ═════════════════════════════════════════════════════════════
+@app.post("/api/sales/chat", tags=["Sales Agent"])
+async def sales_chat(request: Request):
+    try:
+        body = await request.json()
+        transcript = body.get("message", "").strip()
+        history = body.get("history", [])
+        
+        if not transcript:
+            raise HTTPException(status_code=400, detail="Message context token is empty")
+        
+        # Executes the multi-lingual Llama 3.3 state framework
+        result = get_sales_response(transcript, history)
+        return result
+
+    except HTTPException as http_err:
+        raise http_err
+    except Exception as err:
+        logger.error(f"Root Sales workspace route crashed: {str(err)}")
+        raise HTTPException(status_code=500, detail=str(err))

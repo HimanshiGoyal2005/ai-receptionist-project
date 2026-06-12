@@ -10,6 +10,9 @@ class LeadCreate(BaseModel):
     requirement: Optional[str] = None
     budget: Optional[str] = None
     timeline: Optional[str] = None
+    team_size: Optional[str] = None
+    industry: Optional[str] = None
+    lead_score: Optional[str] = None
     status: Optional[str] = "new"
     source: Optional[str] = "voice_call"
     company_id: Optional[int] = None
@@ -22,6 +25,9 @@ class LeadUpdate(BaseModel):
     requirement: Optional[str] = None
     budget: Optional[str] = None
     timeline: Optional[str] = None
+    team_size: Optional[str] = None
+    industry: Optional[str] = None
+    lead_score: Optional[str] = None
     status: Optional[str] = None
 
 
@@ -33,6 +39,9 @@ class LeadResponse(BaseModel):
     requirement: Optional[str]
     budget: Optional[str]
     timeline: Optional[str]
+    team_size: Optional[str]
+    industry: Optional[str]
+    lead_score: Optional[str]
     status: str
     source: str
     company_id: Optional[int]

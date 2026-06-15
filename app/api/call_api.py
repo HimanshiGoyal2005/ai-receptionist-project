@@ -14,6 +14,8 @@ from app.models.call_log import CallLog
 from app.services.stt_service import transcribe_audio
 from app.services.llm_service import get_llm_response, normalize_lead_data, get_sales_response
 from app.services.tts_service import text_to_speech
+# 🚨 FIXED IMPORTS: Linked matching synchronous corporate automation workflows
+from app.services.automation_service import send_whatsapp_followup, send_email_followup, generate_google_calendar_link
 from app.utils.logger import get_logger
 
 logger = get_logger("call_api")
@@ -48,7 +50,6 @@ def parse_appointment_from_transcript(transcript: str):
     appointment_date = None
     appointment_time = None
 
-    # Parse time like 3pm, 3:00 pm, 3 pm, 15:00
     time_match = re.search(r"\b(1[0-2]|0?[1-9])(?::([0-5][0-9]))?\s*(am|pm)\b", text)
     if time_match:
         hour = int(time_match.group(1))
@@ -66,7 +67,6 @@ def parse_appointment_from_transcript(transcript: str):
     elif re.search(r"\bevening\b", text):
         appointment_time = "18:00"
 
-    # Parse relative weekdays
     if "next monday" in text:
         appointment_date = find_next_weekday(datetime.utcnow(), "monday").date()
     elif "next tuesday" in text:
@@ -127,7 +127,6 @@ async def process_call(
         extracted = normalize_lead_data(extracted)
         extracted["lead_score"] = llm_result.get("lead_score", extracted.get("lead_score", "Cold Lead"))
 
-        # Fallback: detect appointment date/time directly from transcript
         parsed_date, parsed_time = parse_appointment_from_transcript(transcript)
         if not extracted.get("appointment_date") and parsed_date:
             extracted["appointment_date"] = parsed_date
@@ -209,6 +208,20 @@ async def process_call(
             db.refresh(appointment)
             appointment_id = appointment.id
 
+            # 🚨 CRITICAL FIX: Removed await keyword to match synchronous service hub methods
+            try:
+                # 📅 Synchronous Google Calendar hyper-routing integration
+                generate_google_calendar_link(extracted)
+
+                if extracted.get("phone"):
+                    send_whatsapp_followup(extracted["phone"], extracted)
+
+                if extracted.get("email"):
+                    send_email_followup(extracted["email"], extracted)
+                    
+            except Exception as automation_err:
+                logger.error(f"Appointment automation failed: {automation_err}")
+
         # Step G: Call Log Save
         call_log = CallLog(
             lead_id=lead_id,
@@ -237,7 +250,7 @@ async def process_call(
 
 
 # ═════════════════════════════════════════════════════════════
-# 🤖 ADDED: TEXT-BASED SALES AGENT INTERFACE CHANNEL
+# 🤖 UPGRADED TEXT-BASED SALES AGENT INTERFACE CHANNEL
 # ═════════════════════════════════════════════════════════════
 @router.post("/chat")
 async def sales_agent_text_chat(request: Request, db: Session = Depends(get_db)):
@@ -253,18 +266,15 @@ async def sales_agent_text_chat(request: Request, db: Session = Depends(get_db))
         if not transcript:
             raise HTTPException(status_code=400, detail="Message context token is empty")
 
-        # Delegate execution down to our updated Llama 3.3 pipeline handler
         sales_data = get_sales_response(transcript, conversation_history)
-        
-        # Pipeline synchronization hooks for automated database records
         extracted = sales_data.get("extracted_data", {})
         
-        # Real-time state machine triggers matching frontend bindings
         return {
             "reply": sales_data.get("reply", ""),
             "stage": sales_data.get("stage", "QUALIFICATION"),
             "detected_language": sales_data.get("detected_language", "English"),
             "suggested_plan": sales_data.get("suggested_plan", None),
+            "handoff_triggered": sales_data.get("handoff_triggered", False), # Added for direct proxy mapping
             "extracted_data": extracted
         }
 

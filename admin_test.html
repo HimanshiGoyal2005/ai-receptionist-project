@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Real Human Agent Console</title>
+    <style>
+      body {
+        background: #0b0f19;
+        color: #e2e8f0;
+        font-family: sans-serif;
+        padding: 20px;
+      }
+      #logs {
+        border: 1px solid #1f293d;
+        background: #0d1117;
+        padding: 15px;
+        height: 300px;
+        overflow-y: auto;
+        border-radius: 8px;
+        margin-bottom: 10px;
+      }
+      .alert {
+        color: #f87171;
+        font-weight: bold;
+      }
+      .msg {
+        color: #38bdf8;
+      }
+      .me {
+        color: #a7f3d0;
+        font-weight: 500;
+      }
+      input {
+        background: #1e293b;
+        border: 1px solid #334155;
+        padding: 10px;
+        color: white;
+        width: 70%;
+        border-radius: 6px;
+      }
+      button {
+        background: #6366f1;
+        border: none;
+        padding: 10px 20px;
+        color: white;
+        border-radius: 6px;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <h2>📡 Real Human Agent Dashboard (Active Sockets)</h2>
+    <div id="logs">Waiting for connection stream...</div>
+    <input
+      type="text"
+      id="replyInput"
+      placeholder="Type message to send back to client dashboard..."
+      onkeydown="handleKey(event)"
+    />
+    <button onclick="sendReply()">Send as Human Agent</button>
+
+    <script>
+      const ws = new WebSocket("ws://localhost:8000/ws/handoff");
+      const logsDiv = document.getElementById("logs");
+      let lastSentMessage = ""; // Stores reference token to filter loops
+
+      ws.onopen = () => {
+        logsDiv.innerHTML +=
+          "<div>🟢 Connected to Live Core Streaming...</div>";
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          if (data.event === "HANDOFF_ALERT") {
+            logsDiv.innerHTML += `<div class="alert"><br>🚨 [CLIENT CRITICAL ALERT]: Client triggered handoff!</div>`;
+          }
+        } catch (e) {
+          const incomingText = event.data;
+
+          // 🚨 DOUBLE PRINTING PREVENTER CLEAN BLOCK
+          // Agar ghoom kar aaya hua message hamara khud ka bheja hua hai, toh use ignore karo
+          if (incomingText === lastSentMessage) {
+            return;
+          }
+
+          // Agar message client ka hai (yaani uspar admin ka badge nahi laga hai)
+          if (!incomingText.startsWith("👨‍💼")) {
+            logsDiv.innerHTML += `<div class="msg"><br>👤 Client Sent: ${incomingText}</div>`;
+          }
+        }
+        logsDiv.scrollTop = logsDiv.scrollHeight;
+      };
+
+      function sendReply() {
+        const input = document.getElementById("replyInput");
+        const currentInput = input.value.trim();
+
+        if (currentInput) {
+          lastSentMessage = currentInput; // Set token to prevent rendering echo
+          ws.send(currentInput); // Dispatches text directly over active backend sockets
+
+          // Instantly show local layout state clean configuration
+          logsDiv.innerHTML += `<div class="me"><br> Me (Human): ${currentInput}</div>`;
+          input.value = "";
+          logsDiv.scrollTop = logsDiv.scrollHeight;
+        }
+      }
+
+      function handleKey(e) {
+        if (e.key === "Enter") {
+          sendReply();
+        }
+      }
+    </script>
+  </body>
+</html>

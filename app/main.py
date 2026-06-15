@@ -1,5 +1,6 @@
 import os
-from fastapi import FastAPI, HTTPException, Request
+import json
+from fastapi import FastAPI, HTTPException, Request, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
@@ -11,6 +12,8 @@ from app.api.analytics_api import router as analytics_router
 from app.api.conversations_api import router as conversations_router
 from app.api.auth_api import router as auth_router
 from app.services.llm_service import get_sales_response
+# 🚨 FIXED IMPORT: Added Google Calendar generation node along with WhatsApp and Email
+from app.services.automation_service import send_whatsapp_followup, send_email_followup, generate_google_calendar_link
 from app.utils.logger import get_logger
 
 logger = get_logger("main")
@@ -43,6 +46,26 @@ app.include_router(analytics_router)
 app.include_router(conversations_router)
 
 
+# 📡 1. REAL-TIME SOCKET POOL FOR HUMAN ACCESS
+connected_agents = []
+
+@app.websocket("/ws/handoff")
+async def websocket_handoff_endpoint(websocket: WebSocket):
+    await websocket.accept()
+    connected_agents.append(websocket)
+    logger.info("📡 [SOCKET CONNECTED] A real human agent dashboard has logged in.")
+    try:
+        while True:
+            # Active transmission listener
+            data = await websocket.receive_text()
+            # Broadcast user chat message to all connected admins live
+            for agent in connected_agents:
+                await agent.send_text(data)
+    except WebSocketDisconnect:
+        connected_agents.remove(websocket)
+        logger.info("📡 [SOCKET DISCONNECTED] Human agent closed the connection.")
+
+
 @app.on_event("startup")
 def on_startup():
     create_tables()
@@ -57,7 +80,7 @@ def health_check():
 
 
 # ═════════════════════════════════════════════════════════════
-# 🤖 STANDALONE SALES AGENT ENDPOINT WIRING
+# 🤖 UPGRADED SALES AGENT INTERFACE PIPELINE
 # ═════════════════════════════════════════════════════════════
 @app.post("/api/sales/chat", tags=["Sales Agent"])
 async def sales_chat(request: Request):
@@ -71,6 +94,31 @@ async def sales_chat(request: Request):
         
         # Executes the multi-lingual Llama 3.3 state framework
         result = get_sales_response(transcript, history)
+        extracted = result.get("extracted_data", {})
+        
+        # 🚨 TRIGGER A: Alert real human agent screens via socket pool
+        if result.get("handoff_triggered") == True:
+           logger.warn("[HANDOFF TRIGGERED] Broadcasting emergency alert packet to human dashboards.")
+    
+        for agent in connected_agents:
+                await agent.send_text(json.dumps({
+                    "event": "HANDOFF_ALERT",
+                    "message": "Connecting you to a human representative.",
+                    "client_requirement": extracted.get("requirement", "Custom Complex Query")
+                }))
+
+        # 🚨 TRIGGER B: Automated Email, WhatsApp & Google Calendar on closing matrix
+        if result.get("stage") in ["MEETING", "CLOSING"]:
+            customer_phone = extracted.get("phone") or "9876543210"
+            customer_email = extracted.get("email") or "client@company.com"
+            
+            # Fire free simulation notification logs to terminal screen
+            send_whatsapp_followup(customer_phone, extracted)
+            send_email_followup(customer_email, extracted)
+            
+            # 📅 New Node Added: Fires interactive Google Calendar link directly to terminal logs
+            generate_google_calendar_link(extracted)
+            
         return result
 
     except HTTPException as http_err:

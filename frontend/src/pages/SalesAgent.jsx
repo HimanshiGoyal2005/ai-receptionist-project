@@ -9,7 +9,6 @@ const STAGE_INFO = {
   CLOSING: { label: "Closing", color: "#10b981", icon: "🎯" },
 };
 
-// Keeps array structure for clean rendering but works smoothly with lookups
 const PLANS = [
   {
     name: "Basic",
@@ -45,7 +44,51 @@ function SalesAgent() {
   const [detectedLang, setDetectedLang] = useState(null);
   const [leadData, setLeadData] = useState({});
   const [suggestedPlan, setSuggestedPlan] = useState(null);
+  const [humanHandoffActive, setHumanHandoffActive] = useState(false);
+
   const bottomRef = useRef(null);
+  const socketRef = useRef(null);
+
+  // 📡 BI-DIRECTIONAL WEBSOCKET CLEAN CHANNEL LISTENER
+  useEffect(() => {
+    socketRef.current = new WebSocket("ws://localhost:8000/ws/handoff");
+
+    socketRef.current.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.event === "HANDOFF_ALERT") {
+          setHumanHandoffActive(true);
+        }
+      } catch (err) {
+        // 🚨 TO STOP DOUBLE MESSAGES: Check if message is already mapped locally
+        const incomingText = event.data;
+
+        setMessages((prev) => {
+          // Find if the exact message text was already pushed by client or rendering engine
+          const messageExists = prev.some(
+            (m) =>
+              m.text === incomingText ||
+              m.text === `👨‍💼 [Live Agent]: ${incomingText}`,
+          );
+          if (messageExists) {
+            return prev;
+          }
+
+          return [
+            ...prev,
+            {
+              role: "ai",
+              text: incomingText.startsWith("👨‍💼")
+                ? incomingText
+                : `👨‍💼 [Live Agent]: ${incomingText}`,
+            },
+          ];
+        });
+      }
+    };
+
+    return () => socketRef.current?.close();
+  }, []);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -54,32 +97,62 @@ function SalesAgent() {
   const sendMessage = async () => {
     if (!input.trim() || loading) return;
 
-    const userMsg = { role: "user", text: input };
-    const history = messages.map((m) => ({
+    const currentInput = input.trim();
+    const userMsg = { role: "user", text: currentInput };
+
+    // Explicit array update before backend serialization loop
+    setMessages((prev) => [...prev, userMsg]);
+    setInput("");
+
+    // 📡 Live WebSocket Transmission Route
+    if (humanHandoffActive) {
+      if (
+        socketRef.current &&
+        socketRef.current.readyState === WebSocket.OPEN
+      ) {
+        socketRef.current.send(currentInput);
+      } else {
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "ai",
+            text: "[System]: Live agent connection not ready. Message dropped.",
+          },
+        ]);
+      }
+      return;
+    }
+
+    setLoading(true);
+    const conversationHistory = messages.map((m) => ({
       role: m.role === "ai" ? "assistant" : "user",
       content: m.text,
     }));
 
-    setMessages((prev) => [...prev, userMsg]);
-    const currentInput = input;
-    setInput("");
-    setLoading(true);
-
     try {
       const res = await API.post("/api/sales/chat", {
         message: currentInput,
-        history,
+        history: conversationHistory,
       });
 
       const data = res.data;
 
-      const aiMsg = {
-        role: "ai",
-        text: data.reply,
-        stage: data.stage,
-      };
-
-      setMessages((prev) => [...prev, aiMsg]);
+      if (data.handoff_triggered === true) {
+        setHumanHandoffActive(true);
+        setMessages((prev) => [
+          ...prev,
+          { role: "ai", text: data.reply },
+          {
+            role: "ai",
+            text: "🚨 [SYSTEM ALERT]: Connecting you to a human representative. A human agent has taken over this workspace stream live.",
+          },
+        ]);
+      } else {
+        setMessages((prev) => [
+          ...prev,
+          { role: "ai", text: data.reply, stage: data.stage },
+        ]);
+      }
 
       if (data.stage) setStage(data.stage);
       if (data.detected_language) setDetectedLang(data.detected_language);
@@ -93,14 +166,6 @@ function SalesAgent() {
       }
     } catch (err) {
       console.error(err);
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: "ai",
-          text: "Sorry, I'm having a technical issue. Please try again!",
-          stage,
-        },
-      ]);
     } finally {
       setLoading(false);
     }
@@ -122,12 +187,34 @@ function SalesAgent() {
     >
       {/* ── LEFT SIDE: Chat Interface ── */}
       <div
-        className="flex-1 flex flex-col rounded-2xl overflow-hidden"
+        className="flex-1 flex flex-col rounded-2xl overflow-hidden relative"
         style={{
           backgroundColor: "#0d1117",
           border: "1px solid rgba(255,255,255,0.06)",
         }}
       >
+        {/* Red Glow Banner overlay for Human Handoff Takeover */}
+        {humanHandoffActive && (
+          <div
+            className="absolute left-0 right-0 z-10 flex items-center justify-between px-6 py-2.5 border-y animate-pulse"
+            style={{
+              top: "73px",
+              backgroundColor: "rgba(239, 68, 68, 0.1)",
+              borderColor: "rgba(239, 68, 68, 0.3)",
+            }}
+          >
+            <span className="text-xs font-bold text-red-400">
+              🚨 HUMAN REPRESENTATIVE SECURED — AGENT SYSTEM OVERRIDE ACTIVE
+            </span>
+            <button
+              onClick={() => setHumanHandoffActive(false)}
+              className="text-[10px] text-white font-bold px-2 py-0.5 rounded transition-all bg-red-600 hover:bg-red-700"
+            >
+              Reset to AI
+            </button>
+          </div>
+        )}
+
         {/* Chat Header */}
         <div
           className="flex items-center justify-between px-6 py-4"
@@ -279,11 +366,17 @@ function SalesAgent() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKey}
-              placeholder="Type your message here... (e.g., 'Price kya hai?')"
+              placeholder={
+                humanHandoffActive
+                  ? "Type directly to chat with live representative..."
+                  : "Type your message here... (e.g., 'Price kya hai?')"
+              }
               className="flex-1 rounded-xl px-4 py-3 text-sm text-white outline-none transition-all placeholder-gray-600"
               style={{
                 backgroundColor: "rgba(255,255,255,0.05)",
-                border: "1px solid rgba(255,255,255,0.08)",
+                border: humanHandoffActive
+                  ? "1px solid rgba(239, 68, 68, 0.4)"
+                  : "1px solid rgba(255,255,255,0.08)",
                 caretColor: "#6366f1",
               }}
               disabled={loading}
@@ -310,9 +403,9 @@ function SalesAgent() {
         </div>
       </div>
 
-      {/* ── RIGHT SIDE: Pipeline Monitoring Panel ── */}
+      {/* ── RIGHT SIDE ── */}
       <div className="w-72 flex flex-col gap-4">
-        {/* Sales Funnel States */}
+        {/* Pipeline Tracking */}
         <div
           className="rounded-2xl p-5"
           style={{
@@ -361,7 +454,7 @@ function SalesAgent() {
           </div>
         </div>
 
-        {/* Pricing Matrix Mapping */}
+        {/* Catalog Mapping */}
         <div
           className="rounded-2xl p-5"
           style={{
@@ -424,7 +517,7 @@ function SalesAgent() {
           </div>
         </div>
 
-        {/* Real-time Intent & Context Captured Box */}
+        {/* Real-time Intent Box */}
         {Object.keys(leadData).some((k) => leadData[k]) && (
           <div
             className="rounded-2xl p-5"

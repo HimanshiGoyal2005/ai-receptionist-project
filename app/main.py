@@ -27,20 +27,16 @@ app = FastAPI(
     version="2.0.0"
 )
 
-# Production configuration
-origins = [
-    "https://ai-receptionist-project.vercel.app",  # Your frontend URL
-    # "https://www.yourdomain.com",               # Add other trusted domains if needed
-]
-
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,       # Changed from ["*"]
-    allow_credentials=True,      # Keep True if you are sending cookies/Auth headers
-    allow_methods=["GET", "POST", "PUT", "DELETE"], # Best practice: limit to used methods
-    allow_headers=["Authorization", "Content-Type"], # Best practice: explicitly list headers
+    allow_origins=[
+        "http://localhost:5173",
+        "https://ai-receptionist-project.vercel.app",
+    ],
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
-
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # Core Routers Integration

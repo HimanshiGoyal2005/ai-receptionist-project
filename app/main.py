@@ -26,14 +26,15 @@ app = FastAPI(
     description="Backend API for AI Voice Receptionist System",
     version="2.0.0"
 )
+origins = [
+    "https://ai-receptionist-project-n83049usd-himanshis-projects-2ac0713f.vercel.app", 
+    "http://localhost:5173", # Keep this for local dev
+]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "https://ai-receptionist-project.vercel.app",
-    ],
-    allow_credentials=False,
+    allow_origins=origins, # Explicitly list your production URL here
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )

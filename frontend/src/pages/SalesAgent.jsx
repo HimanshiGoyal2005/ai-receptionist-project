@@ -2,11 +2,11 @@ import { useState, useRef, useEffect } from "react";
 import API from "../services/api";
 
 const STAGE_INFO = {
-  QUALIFICATION: { label: "Qualifying", color: "#6366f1", icon: "🔍" },
-  BUDGET: { label: "Budget", color: "#f59e0b", icon: "💰" },
-  PROPOSAL: { label: "Proposal", color: "#06b6d4", icon: "📋" },
-  MEETING: { label: "Meeting", color: "#8b5cf6", icon: "📅" },
-  CLOSING: { label: "Closing", color: "#10b981", icon: "🎯" },
+  QUALIFICATION: { label: "Qualifying", color: "#7C3AED", icon: "🔍" },
+  BUDGET: { label: "Budget", color: "#F59E0B", icon: "💰" },
+  PROPOSAL: { label: "Proposal", color: "#06B6D4", icon: "📋" },
+  MEETING: { label: "Meeting", color: "#6366F1", icon: "📅" },
+  CLOSING: { label: "Closing", color: "#10B981", icon: "🎯" },
 };
 
 const PLANS = [
@@ -14,19 +14,19 @@ const PLANS = [
     name: "Basic",
     price: "₹20,000",
     desc: "Small teams & individuals",
-    color: "#6366f1",
+    color: "#7C3AED",
   },
   {
     name: "Professional",
     price: "₹50,000",
     desc: "Growing businesses",
-    color: "#06b6d4",
+    color: "#06B6D4",
   },
   {
     name: "Enterprise",
     price: "Custom",
     desc: "Large organizations",
-    color: "#10b981",
+    color: "#10B981",
   },
 ];
 
@@ -182,33 +182,33 @@ function SalesAgent() {
 
   return (
     <div
-      className="flex gap-6 h-full"
+      className="flex gap-6 h-full text-slate-800 font-sans"
       style={{ minHeight: "calc(100vh - 120px)" }}
     >
       {/* ── LEFT SIDE: Chat Interface ── */}
       <div
-        className="flex-1 flex flex-col rounded-2xl overflow-hidden relative"
+        className="flex-1 flex flex-col rounded-2xl overflow-hidden relative bg-white/70 backdrop-blur-xl"
         style={{
-          backgroundColor: "#0d1117",
-          border: "1px solid rgba(255,255,255,0.06)",
+          border: "1px solid rgba(226, 232, 240, 0.6)",
+          boxShadow: "0 20px 50px rgba(15, 23, 42, 0.02)",
         }}
       >
         {/* Red Glow Banner overlay for Human Handoff Takeover */}
         {humanHandoffActive && (
           <div
-            className="absolute left-0 right-0 z-10 flex items-center justify-between px-6 py-2.5 border-y animate-pulse"
-            style={{
-              top: "73px",
-              backgroundColor: "rgba(239, 68, 68, 0.1)",
-              borderColor: "rgba(239, 68, 68, 0.3)",
-            }}
+            className="absolute left-0 right-0 z-10 flex items-center justify-between px-6 py-3 border-y animate-pulse bg-rose-50 border-rose-200"
+            style={{ top: "77px" }}
           >
-            <span className="text-xs font-bold text-red-400">
-              🚨 HUMAN REPRESENTATIVE SECURED — AGENT SYSTEM OVERRIDE ACTIVE
+            <span
+              className="text-xs font-bold text-rose-600 tracking-wide uppercase"
+              style={{ fontFamily: "'Inter', sans-serif" }}
+            >
+              🚨 Human Representative Secured — Agent Override Active
             </span>
             <button
               onClick={() => setHumanHandoffActive(false)}
-              className="text-[10px] text-white font-bold px-2 py-0.5 rounded transition-all bg-red-600 hover:bg-red-700"
+              className="text-[10px] font-bold px-3 py-1 rounded-md transition-all text-white bg-rose-600 hover:opacity-90 shadow-sm uppercase tracking-wider"
+              style={{ fontFamily: "'Space Grotesk', sans-serif" }}
             >
               Reset to AI
             </button>
@@ -216,30 +216,27 @@ function SalesAgent() {
         )}
 
         {/* Chat Header */}
-        <div
-          className="flex items-center justify-between px-6 py-4"
-          style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
-        >
+        <div className="flex items-center justify-between px-6 py-4.5 border-b border-slate-100 bg-white/40">
           <div className="flex items-center gap-3">
             <div
-              className="w-10 h-10 rounded-xl flex items-center justify-center text-xl"
-              style={{
-                background: "linear-gradient(135deg, #6366f1, #06b6d4)",
-                boxShadow: "0 0 20px rgba(99,102,241,0.4)",
-              }}
+              className="w-10 h-10 rounded-xl flex items-center justify-center text-xl bg-gradient-to-br from-purple-500/10 to-cyan-500/10 border border-purple-200/50 text-purple-600 shadow-sm"
+              style={{ fontFamily: "'Space Grotesk', sans-serif" }}
             >
               🤖
             </div>
             <div>
-              <p className="text-white font-semibold text-sm">
+              <p
+                className="font-extrabold text-slate-900 text-sm tracking-tight"
+                style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+              >
                 AI Sales Assistant
               </p>
-              <div className="flex items-center gap-1.5">
-                <div
-                  className="w-1.5 h-1.5 rounded-full bg-green-400"
-                  style={{ boxShadow: "0 0 6px #4ade80" }}
-                />
-                <p className="text-xs" style={{ color: "#475569" }}>
+              <div className="flex items-center gap-1.5 mt-0.5">
+                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.4)]" />
+                <p
+                  className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider"
+                  style={{ fontFamily: "'Inter', sans-serif" }}
+                >
                   Active Pipeline Session
                 </p>
               </div>
@@ -250,21 +247,20 @@ function SalesAgent() {
           <div className="flex items-center gap-2">
             {detectedLang && (
               <div
-                className="px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1"
-                style={{
-                  backgroundColor: "rgba(16,185,129,0.1)",
-                  border: "1px solid rgba(16,185,129,0.3)",
-                  color: "#10b981",
-                }}
+                className="px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 bg-emerald-50 border border-emerald-200/60 text-emerald-600 shadow-sm"
+                style={{ fontFamily: "'Inter', sans-serif" }}
               >
                 <span>🌐</span> {detectedLang}
               </div>
             )}
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10">
-              <span>{currentStage.icon}</span>
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-200 shadow-sm">
+              <span className="text-xs">{currentStage.icon}</span>
               <span
-                className="text-xs font-semibold"
-                style={{ color: currentStage.color }}
+                className="text-[10px] font-bold uppercase tracking-wider"
+                style={{
+                  color: currentStage.color,
+                  fontFamily: "'Inter', sans-serif",
+                }}
               >
                 {currentStage.label}
               </span>
@@ -273,7 +269,7 @@ function SalesAgent() {
         </div>
 
         {/* Chat Stream Window */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-4">
+        <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-slate-50/20">
           {messages.map((msg, i) => (
             <div
               key={i}
@@ -281,38 +277,41 @@ function SalesAgent() {
             >
               {msg.role === "ai" && (
                 <div
-                  className="w-7 h-7 rounded-lg flex items-center justify-center text-sm mr-2 mt-1 flex-shrink-0"
-                  style={{
-                    background: "linear-gradient(135deg, #6366f1, #06b6d4)",
-                  }}
+                  className="w-7 h-7 rounded-lg flex items-center justify-center text-xs mr-2 mt-1 flex-shrink-0 bg-gradient-to-br from-purple-500/10 to-cyan-500/10 border border-purple-200/50 text-purple-600 shadow-sm"
+                  style={{ fontFamily: "'Space Grotesk', sans-serif" }}
                 >
                   🤖
                 </div>
               )}
               <div className="max-w-xs lg:max-w-md">
                 <div
-                  className="px-4 py-3 rounded-2xl text-sm leading-relaxed"
+                  className="px-4 py-3 rounded-2xl text-[14px] font-medium leading-relaxed shadow-sm"
                   style={
                     msg.role === "user"
                       ? {
                           background:
-                            "linear-gradient(135deg, #6366f1, #4f46e5)",
+                            "linear-gradient(135deg, #7C3AED 0%, #06B6D4 100%)",
                           color: "white",
                           borderBottomRightRadius: "4px",
-                          boxShadow: "0 0 20px rgba(99,102,241,0.3)",
+                          boxShadow: "0 4px 14px rgba(124, 58, 237, 0.15)",
+                          fontFamily: "'Inter', sans-serif",
                         }
                       : {
-                          backgroundColor: "rgba(255,255,255,0.05)",
-                          border: "1px solid rgba(255,255,255,0.08)",
-                          color: "#cbd5e1",
+                          backgroundColor: "#FFFFFF",
+                          border: "1px solid rgba(226, 232, 240, 0.8)",
+                          color: "#334155",
                           borderBottomLeftRadius: "4px",
+                          fontFamily: "'Inter', sans-serif",
                         }
                   }
                 >
                   {msg.text}
                 </div>
                 {msg.stage && msg.role === "ai" && (
-                  <p className="text-[10px] mt-1 ml-1 text-gray-600 font-medium uppercase tracking-wider">
+                  <p
+                    className="text-[10px] mt-1.5 ml-1 text-slate-400 font-bold uppercase tracking-wider"
+                    style={{ fontFamily: "'Inter', sans-serif" }}
+                  >
                     Funnel Shift: {STAGE_INFO[msg.stage]?.label || msg.stage}
                   </p>
                 )}
@@ -324,27 +323,19 @@ function SalesAgent() {
           {loading && (
             <div className="flex justify-start">
               <div
-                className="w-7 h-7 rounded-lg flex items-center justify-center text-sm mr-2"
-                style={{
-                  background: "linear-gradient(135deg, #6366f1, #06b6d4)",
-                }}
+                className="w-7 h-7 rounded-lg flex items-center justify-center text-xs mr-2 bg-gradient-to-br from-purple-500/10 to-cyan-500/10 border border-purple-200/50 text-purple-600 shadow-sm"
+                style={{ fontFamily: "'Space Grotesk', sans-serif" }}
               >
                 🤖
               </div>
-              <div
-                className="px-4 py-3 rounded-2xl"
-                style={{
-                  backgroundColor: "rgba(255,255,255,0.05)",
-                  border: "1px solid rgba(255,255,255,0.08)",
-                }}
-              >
-                <div className="flex gap-1">
+              <div className="px-4 py-3 rounded-2xl bg-white border border-slate-200 shadow-sm">
+                <div className="flex gap-1.5 items-center h-4">
                   {[0, 1, 2].map((i) => (
                     <div
                       key={i}
-                      className="w-2 h-2 rounded-full"
+                      className="w-1.5 h-1.5 rounded-full"
                       style={{
-                        backgroundColor: "#6366f1",
+                        backgroundColor: "#7C3AED",
                         animation: `bounce 1s infinite ${i * 0.2}s`,
                       }}
                     />
@@ -357,10 +348,7 @@ function SalesAgent() {
         </div>
 
         {/* Input Bar Layout */}
-        <div
-          className="p-4"
-          style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}
-        >
+        <div className="p-4 border-t border-slate-100 bg-white/40">
           <div className="flex gap-3">
             <input
               value={input}
@@ -371,30 +359,31 @@ function SalesAgent() {
                   ? "Type directly to chat with live representative..."
                   : "Type your message here... (e.g., 'Price kya hai?')"
               }
-              className="flex-1 rounded-xl px-4 py-3 text-sm text-white outline-none transition-all placeholder-gray-600"
+              className="flex-1 rounded-xl px-4 py-3 text-sm text-slate-800 outline-none transition-all placeholder-slate-400 bg-white border shadow-sm"
               style={{
-                backgroundColor: "rgba(255,255,255,0.05)",
-                border: humanHandoffActive
-                  ? "1px solid rgba(239, 68, 68, 0.4)"
-                  : "1px solid rgba(255,255,255,0.08)",
-                caretColor: "#6366f1",
+                borderColor: humanHandoffActive ? "#F43F5E" : "#E2E8F0",
+                boxShadow: humanHandoffActive
+                  ? "0 0 0 4px rgba(244, 63, 94, 0.05)"
+                  : "none",
+                fontFamily: "'Inter', sans-serif",
               }}
               disabled={loading}
             />
             <button
               onClick={sendMessage}
               disabled={loading || !input.trim()}
-              className="px-5 py-3 rounded-xl text-sm font-semibold text-white transition-all"
+              className="px-5 py-3 rounded-xl text-sm font-bold text-white transition-all shadow-md"
               style={{
                 background:
                   loading || !input.trim()
-                    ? "rgba(99,102,241,0.3)"
-                    : "linear-gradient(135deg, #6366f1, #06b6d4)",
+                    ? "#CBD5E1"
+                    : "linear-gradient(135deg, #7C3AED 0%, #06B6D4 100%)",
                 boxShadow:
                   loading || !input.trim()
                     ? "none"
-                    : "0 0 20px rgba(99,102,241,0.4)",
+                    : "0 4px 14px rgba(124, 58, 237, 0.2)",
                 cursor: loading || !input.trim() ? "not-allowed" : "pointer",
+                fontFamily: "'Space Grotesk', sans-serif",
               }}
             >
               Send →
@@ -407,36 +396,39 @@ function SalesAgent() {
       <div className="w-72 flex flex-col gap-4">
         {/* Pipeline Tracking */}
         <div
-          className="rounded-2xl p-5"
+          className="rounded-2xl p-5 bg-white/70 backdrop-blur-xl"
           style={{
-            backgroundColor: "#0d1117",
-            border: "1px solid rgba(255,255,255,0.06)",
+            border: "1px solid rgba(226, 232, 240, 0.6)",
+            boxShadow: "0 4px 20px rgba(15, 23, 42, 0.01)",
           }}
         >
           <p
-            className="text-xs font-semibold uppercase tracking-widest mb-4"
-            style={{ color: "#475569" }}
+            className="text-[11px] font-bold uppercase tracking-widest mb-4 text-slate-400"
+            style={{ fontFamily: "'Inter', sans-serif" }}
           >
             Pipeline Tracking
           </p>
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             {Object.entries(STAGE_INFO).map(([key, val]) => (
               <div
                 key={key}
-                className="flex items-center gap-3 px-3 py-2 rounded-xl transition-all"
+                className="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all"
                 style={{
                   backgroundColor:
-                    stage === key ? `${val.color}15` : "transparent",
+                    stage === key ? `${val.color}08` : "transparent",
                   border:
                     stage === key
-                      ? `1px solid ${val.color}40`
+                      ? `1px solid ${val.color}30`
                       : "1px solid transparent",
                 }}
               >
-                <span>{val.icon}</span>
+                <span className="text-sm">{val.icon}</span>
                 <span
-                  className="text-sm font-medium"
-                  style={{ color: stage === key ? val.color : "#334155" }}
+                  className="text-sm font-bold tracking-tight"
+                  style={{
+                    color: stage === key ? val.color : "#64748B",
+                    fontFamily: "'Space Grotesk', sans-serif",
+                  }}
                 >
                   {val.label}
                 </span>
@@ -456,15 +448,15 @@ function SalesAgent() {
 
         {/* Catalog Mapping */}
         <div
-          className="rounded-2xl p-5"
+          className="rounded-2xl p-5 bg-white/70 backdrop-blur-xl"
           style={{
-            backgroundColor: "#0d1117",
-            border: "1px solid rgba(255,255,255,0.06)",
+            border: "1px solid rgba(226, 232, 240, 0.6)",
+            boxShadow: "0 4px 20px rgba(15, 23, 42, 0.01)",
           }}
         >
           <p
-            className="text-xs font-semibold uppercase tracking-widest mb-4"
-            style={{ color: "#475569" }}
+            className="text-[11px] font-bold uppercase tracking-widest mb-4 text-slate-400"
+            style={{ fontFamily: "'Inter', sans-serif" }}
           >
             Catalog Mapping
           </p>
@@ -475,37 +467,44 @@ function SalesAgent() {
               return (
                 <div
                   key={plan.name}
-                  className="p-3 rounded-xl transition-all"
+                  className="p-3.5 rounded-xl transition-all border bg-white/80 shadow-sm"
                   style={{
-                    backgroundColor: isRecommended
-                      ? `${plan.color}15`
-                      : "rgba(255,255,255,0.02)",
-                    border: isRecommended
-                      ? `1px solid ${plan.color}50`
-                      : "1px solid rgba(255,255,255,0.05)",
-                    boxShadow: isRecommended
-                      ? `0 0 15px ${plan.color}15`
-                      : "none",
+                    borderColor: isRecommended
+                      ? plan.color
+                      : "rgba(226, 232, 240, 0.8)",
+                    background: isRecommended ? `${plan.color}04` : "#FFFFFF",
                   }}
                 >
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-sm font-semibold text-white">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span
+                      className="text-sm font-bold text-slate-900 tracking-tight"
+                      style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+                    >
                       {plan.name}
                     </span>
                     <span
-                      className="text-sm font-bold"
-                      style={{ color: plan.color }}
+                      className="text-sm font-extrabold"
+                      style={{
+                        color: plan.color,
+                        fontFamily: "'Space Grotesk', sans-serif",
+                      }}
                     >
                       {plan.price}
                     </span>
                   </div>
-                  <p className="text-xs text-gray-500">{plan.desc}</p>
+                  <p
+                    className="text-xs font-medium text-slate-400 leading-normal"
+                    style={{ fontFamily: "'Inter', sans-serif" }}
+                  >
+                    {plan.desc}
+                  </p>
                   {isRecommended && (
                     <div
-                      className="mt-2 text-[10px] font-bold px-2 py-0.5 rounded-full inline-block"
+                      className="mt-2 text-[10px] font-bold px-2 py-0.5 rounded-md inline-block uppercase tracking-wider"
                       style={{
-                        backgroundColor: `${plan.color}20`,
+                        backgroundColor: `${plan.color}10`,
                         color: plan.color,
+                        fontFamily: "'Inter', sans-serif",
                       }}
                     >
                       ✨ Recommended
@@ -520,30 +519,32 @@ function SalesAgent() {
         {/* Real-time Intent Box */}
         {Object.keys(leadData).some((k) => leadData[k]) && (
           <div
-            className="rounded-2xl p-5"
-            style={{
-              backgroundColor: "#0d1117",
-              border: "1px solid rgba(16,185,129,0.2)",
-              boxShadow: "0 0 20px rgba(16,185,129,0.05)",
-            }}
+            className="rounded-2xl p-5 bg-emerald-50/40 backdrop-blur-xl shadow-sm animate-fade-in"
+            style={{ border: "1px solid rgba(16, 185, 129, 0.25)" }}
           >
             <p
-              className="text-xs font-semibold uppercase tracking-widest mb-4"
-              style={{ color: "#10b981" }}
+              className="text-[11px] font-bold uppercase tracking-widest mb-4 text-emerald-600"
+              style={{ fontFamily: "'Inter', sans-serif" }}
             >
               📊 Captured Context
             </p>
-            <div className="space-y-2">
+            <div className="space-y-2.5">
               {Object.entries(leadData).map(([key, val]) =>
                 val ? (
                   <div
                     key={key}
-                    className="flex justify-between items-start gap-2 border-b border-white/[0.02] pb-1.5 last:border-0"
+                    className="flex justify-between items-start gap-3 border-b border-slate-200/30 pb-2 last:border-0 last:pb-0"
                   >
-                    <span className="text-xs capitalize text-gray-500 flex-shrink-0">
+                    <span
+                      className="text-xs font-bold capitalize text-slate-400 flex-shrink-0"
+                      style={{ fontFamily: "'Inter', sans-serif" }}
+                    >
                       {key}:
                     </span>
-                    <span className="text-xs text-white font-medium text-right break-words max-w-[150px]">
+                    <span
+                      className="text-xs text-slate-700 font-semibold text-right break-words max-w-[150px]"
+                      style={{ fontFamily: "'Inter', sans-serif" }}
+                    >
                       {val}
                     </span>
                   </div>

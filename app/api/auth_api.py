@@ -8,6 +8,7 @@ from passlib.context import CryptContext
 
 from app.database import get_db
 from app.models.user import User
+from app.models.company import Company  # 🌟 Imported Company model for auto provisioning
 from app.config import get_settings
 from app.utils.logger import get_logger
 
@@ -67,18 +68,47 @@ def register(req: RegisterRequest, db: Session = Depends(get_db)):
     existing = db.query(User).filter(User.email == req.email).first()
     if existing:
         raise HTTPException(status_code=400, detail="Email already registered")
+        
+    # ── STEP 1: Pass empty placeholders to instantiate user node first ──
     user = User(
         name=req.name,
         email=req.email,
         password_hash=hash_password(req.password),
-        role="admin"
+        role="admin",
+        company_id=None  # Temp initialization before company record generation
     )
     db.add(user)
     db.commit()
     db.refresh(user)
-    token = create_token({"user_id": user.id, "email": user.email})
-    logger.info(f"New user registered: {user.email}")
-    return {"token": token, "user": {"id": user.id, "name": user.name, "email": user.email}}
+
+    # ── STEP 2: Automatically spin up a dedicated Company Node for this owner ──
+    new_company = Company(
+        company_name=f"{req.name}'s Organization",
+        industry="Technology",
+        phone=None,
+        plan="free",
+        status="active"
+    )
+    db.add(new_company)
+    db.commit()
+    db.refresh(new_company)
+
+    # ── STEP 3: Link the user strictly to the newly generated company_id ──
+    user.company_id = new_company.id
+    db.commit()
+    db.refresh(user)
+
+    token = create_token({"user_id": user.id, "email": user.email, "company_id": user.company_id})
+    logger.info(f"New user and workspace company auto-provisioned: {user.email}")
+    return {
+        "token": token, 
+        "user": {
+            "id": user.id, 
+            "name": user.name, 
+            "email": user.email, 
+            "company_id": user.company_id
+        }
+    }
 
 
 @router.post("/login")
@@ -86,11 +116,18 @@ def login(req: LoginRequest, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == req.email).first()
     if not user or not verify_password(req.password, user.password_hash):
         raise HTTPException(status_code=401, detail="Invalid email or password")
-    token = create_token({"user_id": user.id, "email": user.email})
+        
+    token = create_token({"user_id": user.id, "email": user.email, "company_id": user.company_id})
     logger.info(f"User logged in: {user.email}")
     return {
         "token": token,
-        "user": {"id": user.id, "name": user.name, "email": user.email, "role": user.role}
+        "user": {
+            "id": user.id, 
+            "name": user.name, 
+            "email": user.email, 
+            "role": user.role, 
+            "company_id": user.company_id
+        }
     }
 
 
@@ -100,5 +137,6 @@ def get_me(current_user: User = Depends(get_current_user)):
         "id": current_user.id,
         "name": current_user.name,
         "email": current_user.email,
-        "role": current_user.role
+        "role": current_user.role,
+        "company_id": current_user.company_id
     }

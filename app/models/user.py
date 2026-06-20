@@ -10,6 +10,9 @@ class User(Base):
     name = Column(String, nullable=False)
     email = Column(String, unique=True, index=True, nullable=False)
     password_hash = Column(String, nullable=False)
-    role = Column(String, default="admin")
-    company_id = Column(Integer, ForeignKey("companies.id"), nullable=True)
+    role = Column(String, default="admin") # "admin", "agent", etc.
+    
+    # 🌟 CHANGE: 'unique=True' hata diya hai. Ab multiple users me same company_id ho sakti hai.
+    company_id = Column(Integer, ForeignKey("companies.id", ondelete="SET NULL"), nullable=True)
+    
     created_at = Column(DateTime, default=datetime.utcnow)

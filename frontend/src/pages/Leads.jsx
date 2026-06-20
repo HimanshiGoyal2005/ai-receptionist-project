@@ -2,13 +2,13 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import API from "../services/api";
 
-// Modern glowing tags based on status
+// 🌟 Styled dynamically for the premium OmniDim clean light aesthetic
 const statusStyles = {
-  new: "bg-blue-500/10 text-blue-400 border border-blue-500/20 shadow-[0_0_15px_rgba(59,130,246,0.1)]",
+  new: "bg-blue-50 text-blue-600 border border-blue-100 shadow-[0_2px_8px_rgba(59,130,246,0.02)]",
   contacted:
-    "bg-amber-500/10 text-amber-400 border border-amber-500/20 shadow-[0_0_15px_rgba(245,158,11,0.1)]",
+    "bg-amber-50 text-amber-600 border border-amber-100 shadow-[0_2px_8px_rgba(245,158,11,0.02)]",
   converted:
-    "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shadow-[0_0_15px_rgba(16,185,129,0.1)]",
+    "bg-emerald-50 text-emerald-600 border border-emerald-100 shadow-[0_2px_8px_rgba(16,185,129,0.02)]",
 };
 
 function Leads() {
@@ -32,55 +32,60 @@ function Leads() {
   );
 
   return (
-    <div className="space-y-6 text-gray-100">
-      {/* Page Context Description */}
-      <div className="flex items-center justify-between border-b border-gray-800/60 pb-5">
-        <div>
-          <h2 className="text-2xl font-bold bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
-            All Captured Leads
-          </h2>
-          <p className="text-sm text-gray-500 mt-0.5">
-            {filtered.length} {filtered.length === 1 ? "lead" : "leads"}{" "}
-            extracted through intelligence models
-          </p>
-        </div>
+    <div className="space-y-6 text-slate-800 font-sans">
+      {/* Header */}
+      <div className="border-b border-slate-200/60 pb-5">
+        <h1
+          className="text-2xl font-extrabold text-slate-900 tracking-tight"
+          style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+        >
+          All Captured Leads
+        </h1>
+        <p
+          className="text-sm font-medium text-slate-500 mt-1"
+          style={{ fontFamily: "'Inter', sans-serif" }}
+        >
+          {filtered.length} {filtered.length === 1 ? "lead" : "leads"} extracted
+          through AI
+        </p>
       </div>
 
-      {/* Premium Dark Search Input Wrapper */}
-      <div className="bg-[#0F1420]/40 backdrop-blur-md rounded-xl border border-gray-800/80 p-4 shadow-xl">
-        <div className="relative flex items-center">
-          <span className="absolute left-4 text-gray-500 pointer-events-none">
-            <svg
-              className="w-4 h-4"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-              />
-            </svg>
+      {/* Search Bar Container */}
+      <div
+        className="rounded-2xl bg-white/70 backdrop-blur-xl p-4"
+        style={{
+          border: "1px solid rgba(226, 232, 240, 0.8)",
+          boxShadow: "0 4px 20px rgba(15, 23, 42, 0.01)",
+        }}
+      >
+        <div className="relative">
+          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm">
+            🔍
           </span>
           <input
             type="text"
-            placeholder="Search by client name, query scope or contact metadata..."
+            placeholder="Search by name, phone, industry..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full bg-[#070A10]/60 border border-gray-800 rounded-lg pl-11 pr-4 py-2.5 text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/30 transition-all duration-200"
+            className="w-full pl-11 pr-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-800 text-sm placeholder-slate-400 outline-none focus:border-purple-300 focus:ring-4 focus:ring-purple-500/5 transition-all shadow-sm"
+            style={{ fontFamily: "'Inter', sans-serif" }}
           />
         </div>
       </div>
 
-      {/* Leads Table Container */}
-      <div className="bg-[#0F1420]/30 backdrop-blur-md rounded-xl border border-gray-800/80 shadow-2xl overflow-hidden">
+      {/* Table Main Grid Container */}
+      <div
+        className="rounded-2xl bg-white/40 backdrop-blur-xl overflow-hidden"
+        style={{
+          border: "1px solid rgba(226, 232, 240, 0.6)",
+          boxShadow: "0 20px 50px rgba(15, 23, 42, 0.02)",
+        }}
+      >
         {loading ? (
-          <div className="text-center py-20 text-gray-500">
+          <div className="text-center py-20 text-slate-400">
             <div className="flex justify-center mb-4">
               <svg
-                className="animate-spin h-8 w-8 text-blue-500"
+                className="animate-spin h-8 w-8 text-purple-600"
                 fill="none"
                 viewBox="0 0 24 24"
               >
@@ -99,14 +104,17 @@ function Leads() {
                 />
               </svg>
             </div>
-            <p className="text-sm tracking-wide font-medium">
-              Fetching sync architecture leads...
+            <p
+              className="text-sm font-semibold tracking-wide text-slate-500"
+              style={{ fontFamily: "'Inter', sans-serif" }}
+            >
+              Loading leads matrices...
             </p>
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left">
-              <thead className="bg-[#0A0E17]/80 border-b border-gray-800/60 text-[11px] font-bold tracking-wider text-gray-400 uppercase">
+            <table className="w-full text-sm text-left border-collapse">
+              <thead className="bg-slate-50/80 border-b border-slate-200/60 text-[11px] font-bold tracking-wider text-slate-400 uppercase">
                 <tr>
                   {[
                     "Name",
@@ -117,64 +125,105 @@ function Leads() {
                     "Lead Score",
                     "Status",
                     "Date",
-                    "Thread",
+                    "Action",
                   ].map((h) => (
                     <th
                       key={h}
-                      className="px-6 py-4 font-semibold tracking-wider"
+                      className="px-6 py-4"
+                      style={{ fontFamily: "'Inter', sans-serif" }}
                     >
                       {h}
                     </th>
                   ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-800/50">
+              <tbody className="divide-y divide-slate-100/70 bg-white/40">
                 {filtered.map((lead) => (
                   <tr
                     key={lead.id}
-                    className="hover:bg-gray-800/20 transition-colors duration-150 group"
+                    className="hover:bg-white/80 transition-all duration-200 group"
                   >
-                    <td className="px-6 py-4 font-medium text-white group-hover:text-blue-400 transition-colors">
-                      {lead.name || "Unknown"}
+                    <td
+                      className="px-6 py-4.5 font-extrabold text-slate-900 tracking-tight text-[14px]"
+                      style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+                    >
+                      {lead.name || "—"}
                     </td>
-                    <td className="px-6 py-4 text-gray-400 font-mono tracking-wide">
+                    <td className="px-6 py-4.5 text-slate-600 font-mono text-xs font-semibold">
                       {lead.phone || "—"}
                     </td>
-                    <td className="px-6 py-4 text-gray-300 max-w-xs truncate">
-                      {lead.requirement || "No data shared"}
+                    <td
+                      className="px-6 py-4.5 text-slate-500 font-medium max-w-xs truncate"
+                      style={{ fontFamily: "'Inter', sans-serif" }}
+                    >
+                      {lead.requirement || "—"}
                     </td>
-                    <td className="px-6 py-4 font-semibold text-gray-200">
+                    <td
+                      className="px-6 py-4.5 text-slate-900 font-extrabold text-[14px]"
+                      style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+                    >
                       {lead.budget ? `₹${lead.budget}` : "—"}
                     </td>
-                    <td className="px-6 py-4 text-gray-300">
+                    <td
+                      className="px-6 py-4.5 text-slate-500 font-bold text-xs"
+                      style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+                    >
                       {lead.industry || "—"}
                     </td>
-                    <td className="px-6 py-4 text-gray-300 font-semibold">
-                      {lead.lead_score || "Cold Lead"}
-                    </td>
-                    <td className="px-6 py-4">
+                    <td className="px-6 py-4.5">
                       <span
-                        className={`px-2.5 py-1 rounded-md text-[11px] font-bold tracking-wide uppercase ${statusStyles[lead.status] || "bg-gray-800 text-gray-400"}`}
+                        className={`px-2.5 py-0.5 rounded-md text-[11px] font-bold ${
+                          lead.lead_score?.toLowerCase() === "hot lead" ||
+                          lead.lead_score?.toLowerCase() === "hot"
+                            ? "bg-rose-50 text-rose-600 border border-rose-100/80 shadow-[0_2px_8px_rgba(244,63,94,0.02)]"
+                            : "bg-slate-50 text-slate-500 border border-slate-200"
+                        }`}
+                        style={{ fontFamily: "'Inter', sans-serif" }}
+                      >
+                        {lead.lead_score || "Cold"}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4.5">
+                      <span
+                        className={`px-2.5 py-1 rounded-lg text-[10px] font-bold tracking-wider uppercase inline-block border ${
+                          statusStyles[lead.status] ||
+                          "bg-slate-50 text-slate-400 border-slate-200"
+                        }`}
+                        style={{ fontFamily: "'Inter', sans-serif" }}
                       >
                         {lead.status}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-gray-500 text-xs font-medium">
+                    <td
+                      className="px-6 py-4.5 text-slate-400 font-medium text-xs"
+                      style={{ fontFamily: "'Inter', sans-serif" }}
+                    >
                       {lead.created_at
                         ? new Date(lead.created_at).toLocaleDateString(
                             undefined,
                             {
-                              year: "numeric",
                               month: "short",
                               day: "numeric",
+                              year: "numeric",
                             },
                           )
                         : "—"}
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-6 py-4.5">
                       <Link
-                        to={`/conversations/${lead.id}`}
-                        className="inline-flex items-center justify-center rounded-md bg-blue-500/10 border border-blue-500/20 px-3 py-1.5 text-xs font-semibold text-blue-300 hover:bg-blue-500/15 transition-colors"
+                        to={`/conversations`}
+                        className="inline-flex px-3 py-1.5 rounded-xl font-bold text-white text-xs tracking-wide transition-all duration-200 shadow-sm"
+                        style={{
+                          background:
+                            "linear-gradient(135deg, #7C3AED 0%, #06B6D4 100%)",
+                          fontFamily: "'Space Grotesk', sans-serif",
+                        }}
+                        onMouseEnter={(e) =>
+                          (e.currentTarget.style.opacity = "0.9")
+                        }
+                        onMouseLeave={(e) =>
+                          (e.currentTarget.style.opacity = "1")
+                        }
                       >
                         View
                       </Link>
@@ -186,18 +235,24 @@ function Leads() {
           </div>
         )}
 
-        {/* Empty State Exception */}
+        {/* Empty Exception State Component */}
         {!loading && filtered.length === 0 && (
-          <div className="text-center py-20 border-t border-gray-800/40 bg-[#070A10]/20">
-            <div className="w-12 h-12 rounded-xl bg-gray-900 border border-gray-800 flex items-center justify-center text-gray-500 mx-auto mb-4">
+          <div className="text-center py-20 bg-slate-50/20">
+            <div className="w-11 h-11 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-sm mx-auto mb-4 shadow-sm">
               👥
             </div>
-            <h3 className="text-sm font-semibold text-gray-300">
-              No pipelines synced yet
+            <h3
+              className="text-sm font-bold text-slate-800"
+              style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+            >
+              No leads found
             </h3>
-            <p className="text-xs text-gray-600 max-w-xs mx-auto mt-1">
-              Upload core audio assets inside the main workspace to populate
-              automated system leads.
+            <p
+              className="text-xs font-medium text-slate-400 max-w-xs mx-auto mt-1.5 leading-relaxed"
+              style={{ fontFamily: "'Inter', sans-serif" }}
+            >
+              Upload audio to system overview to process and generate new logs
+              automatically.
             </p>
           </div>
         )}

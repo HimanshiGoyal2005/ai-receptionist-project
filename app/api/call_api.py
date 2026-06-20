@@ -11,10 +11,11 @@ from app.models.lead import Lead
 from app.models.conversation import Conversation
 from app.models.appointment import Appointment
 from app.models.call_log import CallLog
+from app.models.user import User  # 🌟 Imported User model reference
+from app.api.auth_api import get_current_user  # 🔒 Imported authentication dependency
 from app.services.stt_service import transcribe_audio
 from app.services.llm_service import get_llm_response, normalize_lead_data, get_sales_response
 from app.services.tts_service import text_to_speech
-# 🚨 FIXED IMPORTS: Linked matching synchronous corporate automation workflows
 from app.services.automation_service import send_whatsapp_followup, send_email_followup, generate_google_calendar_link
 from app.utils.logger import get_logger
 
@@ -99,7 +100,8 @@ def parse_appointment_from_transcript(transcript: str):
 @router.post("/process")
 async def process_call(
     audio: UploadFile = File(...),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)  # 🔒 Injected Auth Shield here
 ):
     lead_id = None
     appointment_id = None
@@ -141,8 +143,10 @@ async def process_call(
 
         # Step D: Lead Auto-Save
         if extracted.get("name") and extracted.get("phone"):
+            # 🌟 Updated query: Ensure validation checks only cross-reference records belonging to this company space
             existing_lead = db.query(Lead).filter(
-                Lead.phone == extracted["phone"]
+                Lead.phone == extracted["phone"],
+                Lead.company_id == current_user.company_id
             ).first()
 
             if existing_lead:
@@ -163,17 +167,11 @@ async def process_call(
                 lead_id = existing_lead.id
             else:
                 new_lead = Lead(
-                    name=extracted.get("name"),
-                    phone=extracted.get("phone"),
-                    email=extracted.get("email"),
-                    requirement=extracted.get("requirement"),
-                    budget=extracted.get("budget"),
-                    timeline=extracted.get("timeline"),
-                    team_size=extracted.get("team_size"),
-                    industry=extracted.get("industry"),
-                    lead_score=extracted.get("lead_score"),
+                    **{k: extracted.get(k) for k in ["name", "phone", "email", "requirement", "budget", "timeline", "team_size", "industry", "lead_score"]},
                     status="new",
-                    source="ai_call"
+                    source="ai_call",
+                    user_id=current_user.id,  # 🌟 Dynamic association added
+                    company_id=current_user.company_id  # 🌟 Dynamic association added
                 )
                 db.add(new_lead)
                 db.commit()
@@ -186,7 +184,9 @@ async def process_call(
             transcript=transcript,
             ai_summary=extracted.get("ai_summary", ai_reply[:100]),
             intent=extracted.get("intent", "general"),
-            sentiment="neutral"
+            sentiment="neutral",
+            user_id=current_user.id,  # 🌟 Dynamic association added
+            company_id=current_user.company_id  # 🌟 Dynamic association added
         )
         db.add(conversation)
         db.commit()
@@ -201,24 +201,21 @@ async def process_call(
                 lead_id=lead_id,
                 appointment_date=extracted["appointment_date"],
                 appointment_time=extracted["appointment_time"],
-                status="pending"
+                status="pending",
+                user_id=current_user.id,  # 🌟 Dynamic association added
+                company_id=current_user.company_id  # 🌟 Dynamic association added
             )
             db.add(appointment)
             db.commit()
             db.refresh(appointment)
             appointment_id = appointment.id
 
-            # 🚨 CRITICAL FIX: Removed await keyword to match synchronous service hub methods
             try:
-                # 📅 Synchronous Google Calendar hyper-routing integration
                 generate_google_calendar_link(extracted)
-
                 if extracted.get("phone"):
                     send_whatsapp_followup(extracted["phone"], extracted)
-
                 if extracted.get("email"):
                     send_email_followup(extracted["email"], extracted)
-                    
             except Exception as automation_err:
                 logger.error(f"Appointment automation failed: {automation_err}")
 
@@ -226,7 +223,9 @@ async def process_call(
         call_log = CallLog(
             lead_id=lead_id,
             recording_url=f"/static/uploads/{filename}",
-            status="completed"
+            status="completed",
+            user_id=current_user.id,  # 🌟 Dynamic association added
+            company_id=current_user.company_id  # 🌟 Dynamic association added
         )
         db.add(call_log)
         db.commit()
@@ -253,11 +252,11 @@ async def process_call(
 # 🤖 UPGRADED TEXT-BASED SALES AGENT INTERFACE CHANNEL
 # ═════════════════════════════════════════════════════════════
 @router.post("/chat")
-async def sales_agent_text_chat(request: Request, db: Session = Depends(get_db)):
-    """
-    Dedicated Sales Agent workspace orchestration engine.
-    Processes live conversational streams bypassing static audio parameters.
-    """
+async def sales_agent_text_chat(
+    request: Request, 
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)  # 🔒 Secured route endpoint injection
+):
     try:
         body = await request.json()
         transcript = body.get("message", "").strip()
@@ -274,7 +273,7 @@ async def sales_agent_text_chat(request: Request, db: Session = Depends(get_db))
             "stage": sales_data.get("stage", "QUALIFICATION"),
             "detected_language": sales_data.get("detected_language", "English"),
             "suggested_plan": sales_data.get("suggested_plan", None),
-            "handoff_triggered": sales_data.get("handoff_triggered", False), # Added for direct proxy mapping
+            "handoff_triggered": sales_data.get("handoff_triggered", False),
             "extracted_data": extracted
         }
 

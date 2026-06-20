@@ -7,19 +7,42 @@ import ConversationThread from "./pages/ConversationThread";
 import Appointments from "./pages/Appointments";
 import Layout from "./components/Layout";
 import SalesAgent from "./pages/SalesAgent";
-function App() {
-  const isLoggedIn = localStorage.getItem("user");
+import Home from "./components/Home";
 
+// 🔒 Premium Authentication Gate Component
+function ProtectedRoute({ children }) {
+  const token = localStorage.getItem("token");
+  const user = localStorage.getItem("user");
+
+  // Agar session variables key discovered nahi hui, toh browser directly block karke login screen throw karega
+  if (!token || !user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return children;
+}
+
+function App() {
   return (
     <BrowserRouter>
       <Routes>
+        {/* 🌐 Public Route: Premium OmniDim Landing Page (Koi bhi dekh sakta hai) */}
+        <Route path="/" element={<Home />} />
+
+        {/* 🔑 Public Route: Secure Login Portal */}
         <Route path="/login" element={<Login />} />
+
+        {/* 🔒 Shielded Core Workspace: Access strictly denied without Token */}
         <Route
-          path="/"
-          element={isLoggedIn ? <Layout /> : <Navigate to="/login" />}
+          path="/dashboard"
+          element={
+            <ProtectedRoute>
+              <Layout />
+            </ProtectedRoute>
+          }
         >
+          {/* Layout viewport components mapping nested indices */}
           <Route index element={<Dashboard />} />
-          <Route path="dashboard" element={<Dashboard />} />
           <Route path="leads" element={<Leads />} />
           <Route path="conversations" element={<Conversations />} />
           <Route
@@ -29,7 +52,9 @@ function App() {
           <Route path="sales" element={<SalesAgent />} />
           <Route path="appointments" element={<Appointments />} />
         </Route>
-        <Route path="*" element={<Navigate to="/login" />} />
+
+        {/* Fallback Security Check: Destroy dead URL strings */}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
   );

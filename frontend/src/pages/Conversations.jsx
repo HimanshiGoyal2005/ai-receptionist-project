@@ -2,20 +2,21 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import API from "../services/api";
 
+// 🌟 Styled dynamically for the premium OmniDim clean light aesthetic
 const intentStyles = {
-  lead: "bg-blue-500/10 text-blue-400 border border-blue-500/20 shadow-[0_0_15px_rgba(59,130,246,0.05)]",
+  lead: "bg-purple-50 text-purple-600 border border-purple-100 shadow-[0_2px_8px_rgba(124,58,237,0.02)]",
   appointment:
-    "bg-purple-500/10 text-purple-400 border border-purple-500/20 shadow-[0_0_15px_rgba(168,85,247,0.05)]",
-  faq: "bg-gray-500/10 text-gray-400 border border-gray-500/20",
+    "bg-cyan-50 text-cyan-600 border border-cyan-100 shadow-[0_2px_8px_rgba(6,182,212,0.02)]",
+  faq: "bg-slate-50 text-slate-500 border border-slate-200",
 };
 
 const sentimentStyles = {
   positive:
-    "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shadow-[0_0_15px_rgba(16,185,129,0.05)]",
+    "bg-emerald-50 text-emerald-600 border border-emerald-100 shadow-[0_2px_8px_rgba(16,185,129,0.02)]",
   neutral:
-    "bg-amber-500/10 text-amber-400 border border-amber-500/20 shadow-[0_0_15px_rgba(245,158,11,0.05)]",
+    "bg-amber-50 text-amber-600 border border-amber-100 shadow-[0_2px_8px_rgba(245,158,11,0.02)]",
   negative:
-    "bg-red-500/10 text-red-400 border border-red-500/20 shadow-[0_0_15px_rgba(239,68,68,0.05)]",
+    "bg-rose-50 text-rose-600 border border-rose-100 shadow-[0_2px_8px_rgba(244,63,94,0.02)]",
 };
 
 // Fallback dummy data structure if backend endpoint returns empty
@@ -72,28 +73,34 @@ function Conversations() {
   }, []);
 
   return (
-    <div className="space-y-6 text-gray-100">
+    <div className="space-y-6 text-slate-800 font-sans">
       {/* Dynamic Header */}
-      <div className="flex items-center justify-between border-b border-gray-800/60 pb-5">
+      <div className="flex items-center justify-between border-b border-slate-200/60 pb-5">
         <div>
-          <h2 className="text-2xl font-bold bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
+          <h2
+            className="text-2xl font-extrabold text-slate-900 tracking-tight"
+            style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+          >
             Conversations Log
           </h2>
-          <p className="text-sm text-gray-500 mt-0.5">
+          <p
+            className="text-sm font-medium text-slate-500 mt-1 uppercase tracking-wider"
+            style={{ fontFamily: "'Inter', sans-serif" }}
+          >
             {loading
-              ? "Syncing..."
+              ? "Syncing operational matrix..."
               : `${conversations.length} total active dialog matrices`}
           </p>
         </div>
       </div>
 
       {/* Main List Shell */}
-      <div className="space-y-3.5">
+      <div className="space-y-4">
         {loading ? (
-          <div className="text-center py-20 text-gray-500 bg-[#0F1420]/20 rounded-xl border border-gray-800/40">
+          <div className="text-center py-20 text-slate-400 bg-white/60 backdrop-blur-md rounded-2xl border border-slate-200/80 shadow-sm">
             <div className="flex justify-center mb-4">
               <svg
-                className="animate-spin h-7 w-7 text-blue-500"
+                className="animate-spin h-8 w-8 text-purple-600"
                 fill="none"
                 viewBox="0 0 24 24"
               >
@@ -112,7 +119,10 @@ function Conversations() {
                 />
               </svg>
             </div>
-            <p className="text-sm font-medium tracking-wide">
+            <p
+              className="text-sm font-semibold tracking-wide text-slate-500"
+              style={{ fontFamily: "'Inter', sans-serif" }}
+            >
               Decompressing operational logs...
             </p>
           </div>
@@ -120,34 +130,66 @@ function Conversations() {
           conversations.map((conv) => (
             <div
               key={conv.id}
-              className={`bg-[#0F1420]/30 backdrop-blur-md rounded-xl border transition-all duration-300 overflow-hidden shadow-lg ${
-                expanded === conv.id
-                  ? "border-gray-700/80 bg-[#0F1420]/60"
-                  : "border-gray-800/80 hover:border-gray-700/50"
-              }`}
+              className="backdrop-blur-xl rounded-2xl overflow-hidden transition-all duration-300"
+              style={{
+                border:
+                  expanded === conv.id
+                    ? "1px solid rgba(124, 58, 237, 0.25)"
+                    : "1px solid rgba(226, 232, 240, 0.6)",
+                background:
+                  expanded === conv.id ? "#FFFFFF" : "rgba(255, 255, 255, 0.7)",
+                boxShadow:
+                  expanded === conv.id
+                    ? "0 12px 30px rgba(124, 58, 237, 0.04), 0 4px 12px rgba(15, 23, 42, 0.01)"
+                    : "0 4px 20px rgba(15, 23, 42, 0.01)",
+              }}
             >
               {/* Row Header Trigger */}
               <div
-                className="flex flex-col sm:flex-row sm:items-center justify-between px-6 py-4.5 cursor-pointer gap-4 transition-colors hover:bg-gray-800/10"
+                className="flex flex-col sm:flex-row sm:items-center justify-between px-6 py-5 cursor-pointer gap-4"
                 onClick={() =>
                   setExpanded(expanded === conv.id ? null : conv.id)
                 }
+                onMouseEnter={(e) => {
+                  if (expanded !== conv.id) {
+                    e.currentTarget.parentElement.style.borderColor =
+                      "rgba(124, 58, 237, 0.2)";
+                    e.currentTarget.parentElement.style.background = "#FFFFFF";
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (expanded !== conv.id) {
+                    e.currentTarget.parentElement.style.borderColor =
+                      "rgba(226, 232, 240, 0.6)";
+                    e.currentTarget.parentElement.style.background =
+                      "rgba(255, 255, 255, 0.7)";
+                  }
+                }}
               >
                 <div className="flex items-center gap-4">
-                  {/* Dynamic Letter Badge with gradient tone */}
-                  <div className="w-10 h-10 bg-gradient-to-br from-blue-500/20 to-indigo-500/20 border border-blue-500/30 rounded-xl flex items-center justify-center text-blue-400 font-bold tracking-wide">
+                  {/* Dynamic Letter Badge with premium look */}
+                  <div
+                    className="w-11 h-11 bg-gradient-to-br from-purple-500/10 to-cyan-500/10 border border-purple-200/50 rounded-xl flex items-center justify-center text-purple-600 font-extrabold tracking-wide shadow-sm"
+                    style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+                  >
                     {(conv.lead || "U").charAt(0).toUpperCase()}
                   </div>
                   <div>
-                    <p className="font-semibold text-white tracking-wide group-hover:text-blue-400 transition-colors">
+                    <p
+                      className="font-extrabold text-slate-900 tracking-tight text-[15px]"
+                      style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+                    >
                       {conv.lead || "Unknown Client"}
                     </p>
-                    <p className="text-xs text-gray-500 font-medium mt-0.5">
-                      <span className="font-mono text-gray-400 tracking-wider">
+                    <p
+                      className="text-xs text-slate-400 font-medium mt-1 flex items-center gap-2"
+                      style={{ fontFamily: "'Inter', sans-serif" }}
+                    >
+                      <span className="font-mono text-slate-600 font-semibold bg-slate-50/80 border border-slate-100 px-1.5 py-0.5 rounded">
                         {conv.phone || "—"}
                       </span>
-                      <span className="mx-2 text-gray-700">·</span>
-                      <span className="text-gray-400">
+                      <span className="text-slate-300">•</span>
+                      <span className="font-medium text-slate-500">
                         {conv.date
                           ? new Date(conv.date).toLocaleString(undefined, {
                               month: "short",
@@ -162,15 +204,17 @@ function Conversations() {
                 </div>
 
                 {/* Badges Layout Controls */}
-                <div className="flex items-center justify-between sm:justify-end gap-3.5 border-t border-gray-800/40 pt-3 sm:pt-0 sm:border-none">
+                <div className="flex items-center justify-between sm:justify-end gap-3.5 border-t border-slate-100 pt-3 sm:pt-0 sm:border-none">
                   <div className="flex items-center gap-2">
                     <span
-                      className={`px-2.5 py-1 rounded-md text-[10px] font-bold tracking-wider uppercase ${intentStyles[conv.intent] || intentStyles.faq}`}
+                      className={`px-2.5 py-1 rounded-md text-[10px] font-bold tracking-wider uppercase border ${intentStyles[conv.intent] || intentStyles.faq}`}
+                      style={{ fontFamily: "'Inter', sans-serif" }}
                     >
                       {conv.intent}
                     </span>
                     <span
-                      className={`px-2.5 py-1 rounded-md text-[10px] font-bold tracking-wider uppercase ${sentimentStyles[conv.sentiment] || sentimentStyles.neutral}`}
+                      className={`px-2.5 py-1 rounded-md text-[10px] font-bold tracking-wider uppercase border ${sentimentStyles[conv.sentiment] || sentimentStyles.neutral}`}
+                      style={{ fontFamily: "'Inter', sans-serif" }}
                     >
                       {conv.sentiment}
                     </span>
@@ -179,19 +223,40 @@ function Conversations() {
                     {conv.lead_id ? (
                       <Link
                         to={`/conversations/${conv.lead_id}`}
-                        className="text-xs font-semibold uppercase tracking-wide px-3 py-1 rounded-lg bg-blue-500/10 text-blue-300 border border-blue-500/20 hover:bg-blue-500/15 transition-colors"
+                        onClick={(e) => e.stopPropagation()}
+                        className="inline-flex px-3 py-1.5 rounded-xl font-bold text-white text-xs tracking-wide transition-all duration-200 shadow-sm"
+                        style={{
+                          background:
+                            "linear-gradient(135deg, #7C3AED 0%, #06B6D4 100%)",
+                          fontFamily: "'Space Grotesk', sans-serif",
+                        }}
+                        onMouseEnter={(e) =>
+                          (e.currentTarget.style.opacity = "0.9")
+                        }
+                        onMouseLeave={(e) =>
+                          (e.currentTarget.style.opacity = "1")
+                        }
                       >
                         View Thread
                       </Link>
                     ) : null}
                     <span
-                      className={`text-gray-500 text-xs transition-transform duration-200 pl-2 ${expanded === conv.id ? "rotate-180 text-blue-400" : ""}`}
+                      className={`text-slate-400 pl-1`}
+                      style={{
+                        transition:
+                          "transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                        transform:
+                          expanded === conv.id
+                            ? "rotate(180deg)"
+                            : "rotate(0deg)",
+                        color: expanded === conv.id ? "#7C3AED" : "inherit",
+                      }}
                     >
                       <svg
                         className="w-4 h-4"
                         fill="none"
                         stroke="currentColor"
-                        strokeWidth="2.5"
+                        strokeWidth="3"
                         viewBox="0 0 24 24"
                       >
                         <path
@@ -207,36 +272,49 @@ function Conversations() {
 
               {/* Collapsible Expanded Panel */}
               {expanded === conv.id && (
-                <div className="border-t border-gray-800/60 px-6 py-5 bg-[#070A10]/50 space-y-4 animate-fade-in">
+                <div className="border-t border-slate-100 px-6 py-6 bg-slate-50/30 space-y-5">
                   {conv.lead_id ? (
                     <div className="flex justify-end">
                       <Link
                         to={`/conversations/${conv.lead_id}`}
-                        className="text-xs font-semibold uppercase tracking-wide px-3 py-1 rounded-lg bg-blue-500/10 text-blue-300 border border-blue-500/20 hover:bg-blue-500/15 transition-colors"
+                        className="text-xs font-bold uppercase tracking-wider px-3 py-1.5 rounded-xl border border-purple-200 text-purple-600 bg-white shadow-sm hover:bg-purple-50 transition-all duration-200"
+                        style={{ fontFamily: "'Space Grotesk', sans-serif" }}
                       >
                         Open Client Thread
                       </Link>
                     </div>
                   ) : null}
                   <div>
-                    <div className="flex items-center gap-1.5 mb-1.5">
-                      <span className="w-1 h-1 rounded-full bg-gray-500" />
-                      <p className="text-[10px] font-bold text-gray-500 tracking-widest uppercase">
-                        📝 Voice Core Transcript
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
+                      <p
+                        className="text-[11px] font-bold text-slate-400 tracking-widest uppercase"
+                        style={{ fontFamily: "'Inter', sans-serif" }}
+                      >
+                        🎙️ Voice Core Transcript
                       </p>
                     </div>
-                    <p className="text-sm text-gray-300 leading-relaxed bg-[#070A10]/80 border border-gray-900/60 rounded-xl p-3.5 font-medium">
+                    <p
+                      className="text-sm text-slate-700 leading-relaxed bg-white border border-slate-100 rounded-xl p-4 font-medium shadow-sm"
+                      style={{ fontFamily: "'Inter', sans-serif" }}
+                    >
                       {conv.transcript || "No dialogue captured."}
                     </p>
                   </div>
                   <div>
-                    <div className="flex items-center gap-1.5 mb-1.5">
-                      <span className="w-1 h-1 rounded-full bg-blue-400" />
-                      <p className="text-[10px] font-bold text-blue-400 tracking-widest uppercase">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-purple-500" />
+                      <p
+                        className="text-[11px] font-bold text-purple-600 tracking-widest uppercase"
+                        style={{ fontFamily: "'Inter', sans-serif" }}
+                      >
                         🤖 Structural AI Synthesis Summary
                       </p>
                     </div>
-                    <p className="text-sm text-blue-300 leading-relaxed bg-blue-950/20 border border-blue-900/30 rounded-xl p-3.5 font-medium">
+                    <p
+                      className="text-sm text-purple-700 leading-relaxed bg-purple-50/40 border border-purple-100 rounded-xl p-4 font-medium shadow-sm"
+                      style={{ fontFamily: "'Inter', sans-serif" }}
+                    >
                       {conv.ai_summary ||
                         "Awaiting extraction execution parameters."}
                     </p>

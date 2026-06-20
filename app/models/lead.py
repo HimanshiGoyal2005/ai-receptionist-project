@@ -7,6 +7,10 @@ class Lead(Base):
     __tablename__ = "leads"
 
     id = Column(Integer, primary_key=True, index=True)
+    
+    # 🌟 NEW SECURE COLUMNS: Linking the lead strictly to the authenticated user account
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    
     company_id = Column(Integer, ForeignKey("companies.id"), nullable=True)
     name = Column(String, nullable=False)
     phone = Column(String, nullable=True)

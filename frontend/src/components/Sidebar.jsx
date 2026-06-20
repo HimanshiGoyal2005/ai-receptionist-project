@@ -1,15 +1,16 @@
 import { NavLink } from "react-router-dom";
 
+// 🌟 Sabhi links ke paths ko secure route ke sath sync kiya hai
 const links = [
   {
-    path: "/",
+    path: "/dashboard",
     label: "Dashboard",
     icon: (
       <svg
         className="w-4 h-4"
         fill="none"
         stroke="currentColor"
-        strokeWidth="2"
+        strokeWidth="2.5"
         viewBox="0 0 24 24"
       >
         <path
@@ -21,14 +22,14 @@ const links = [
     ),
   },
   {
-    path: "/leads",
+    path: "/dashboard/leads",
     label: "Leads",
     icon: (
       <svg
         className="w-4 h-4"
         fill="none"
         stroke="currentColor"
-        strokeWidth="2"
+        strokeWidth="2.5"
         viewBox="0 0 24 24"
       >
         <path
@@ -40,14 +41,14 @@ const links = [
     ),
   },
   {
-    path: "/conversations",
+    path: "/dashboard/conversations",
     label: "Conversations",
     icon: (
       <svg
         className="w-4 h-4"
         fill="none"
         stroke="currentColor"
-        strokeWidth="2"
+        strokeWidth="2.5"
         viewBox="0 0 24 24"
       >
         <path
@@ -59,14 +60,14 @@ const links = [
     ),
   },
   {
-    path: "/appointments",
+    path: "/dashboard/appointments",
     label: "Appointments",
     icon: (
       <svg
         className="w-4 h-4"
         fill="none"
         stroke="currentColor"
-        strokeWidth="2"
+        strokeWidth="2.5"
         viewBox="0 0 24 24"
       >
         <path
@@ -78,14 +79,14 @@ const links = [
     ),
   },
   {
-    path: "/sales",
+    path: "/dashboard/sales",
     label: "Sales Agent",
     icon: (
       <svg
         className="w-4 h-4"
         fill="none"
         stroke="currentColor"
-        strokeWidth="2"
+        strokeWidth="2.5"
         viewBox="0 0 24 24"
       >
         <path
@@ -100,65 +101,88 @@ const links = [
 
 function Sidebar() {
   return (
-    <div className="w-64 h-screen bg-[#0A0E17] border-r border-gray-800/80 text-white flex flex-col fixed left-0 top-0 z-20">
+    <div
+      className="w-64 h-screen bg-white text-slate-800 flex flex-col fixed left-0 top-0 z-20"
+      style={{
+        borderRight: "1px solid rgba(226, 232, 240, 0.6)",
+        background: "linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%)",
+        boxShadow: "0 4px 30px rgba(15, 23, 42, 0.01)",
+      }}
+    >
       {/* Branding Header */}
-      <div className="p-6 border-b border-gray-800/80 flex flex-col gap-1">
-        <div className="flex items-center gap-2">
-          <div className="w-5 h-5 rounded bg-blue-500 flex items-center justify-center text-xs shadow-[0_0_10px_rgba(59,130,246,0.5)]">
+      <div className="p-5 border-b border-slate-100 flex flex-col gap-2">
+        <div className="flex items-center gap-3">
+          <div
+            className="w-9 h-9 rounded-xl bg-gradient-to-br from-purple-500 to-cyan-500 flex items-center justify-center text-base text-white"
+            style={{ boxShadow: "0 4px 12px rgba(124, 58, 237, 0.25)" }}
+          >
             🤖
           </div>
-          <h1 className="text-md font-bold tracking-wider text-white">
-            AI RECEPTIONIST
-          </h1>
+          <div>
+            <h1
+              className="text-xs font-black tracking-wider bg-gradient-to-r from-purple-600 to-cyan-600 bg-clip-text text-transparent uppercase"
+              style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+            >
+              AI RECEPTIONIST
+            </h1>
+            <p
+              className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5"
+              style={{ fontFamily: "'Inter', sans-serif" }}
+            >
+              Voice Dashboard
+            </p>
+          </div>
         </div>
-        <p className="text-[10px] text-gray-500 uppercase font-semibold tracking-widest pl-7">
-          Voice Dashboard
-        </p>
       </div>
 
       {/* Navigation Links */}
-      <nav className="flex-1 p-4 space-y-1.5">
+      <nav className="flex-1 p-4 space-y-1">
         {links.map((link) => (
           <NavLink
             key={link.path}
             to={link.path}
-            end={link.path === "/"}
+            // 🌟 Strict exact link match check for the main dashboard dashboard view node
+            end={link.path === "/dashboard"}
             className={({ isActive }) =>
-              `flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-semibold tracking-wide transition-all relative group overflow-hidden ${
+              `flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold tracking-wide transition-all relative group overflow-hidden ${
                 isActive
-                  ? "bg-blue-600/10 text-blue-400 border border-blue-500/20 shadow-[inset_0_0_12px_rgba(59,130,246,0.05)]"
-                  : "text-gray-400 hover:bg-gray-800/40 hover:text-gray-200 border border-transparent"
+                  ? "bg-purple-50/50 text-purple-600 border border-purple-100 shadow-[0_2px_8px_rgba(124,58,237,0.02)]"
+                  : "text-slate-400 hover:bg-slate-50 hover:text-slate-800 border border-transparent"
               }`
             }
+            style={{ fontFamily: "'Space Grotesk', sans-serif" }}
           >
             {({ isActive }) => (
               <>
-                {/* Visual Accent Glow on Left Side for Active Item */}
+                {/* Clean Indicator Light */}
                 {isActive && (
-                  <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-blue-500 rounded-r-sm shadow-[0_0_10px_rgba(59,130,246,1)]" />
+                  <div
+                    className="absolute left-0 top-3 bottom-3 w-0.5 bg-purple-500 rounded-r"
+                    style={{ boxShadow: "0 0 6px rgba(124, 58, 237, 0.6)" }}
+                  />
                 )}
+
                 <div
-                  className={`transition-transform duration-200 group-hover:scale-105 ${
-                    isActive
-                      ? "text-blue-400"
-                      : "text-gray-500 group-hover:text-gray-300"
-                  }`}
+                  className={`transition-transform duration-200 ${isActive ? "text-purple-600" : "text-slate-400"}`}
                 >
                   {link.icon}
                 </div>
-                <span>{link.label}</span>
+                <span className="flex-1">{link.label}</span>
               </>
             )}
           </NavLink>
         ))}
       </nav>
 
-      {/* Footer Meta Details */}
-      <div className="p-4 border-t border-gray-800/80 bg-[#070A10]/50 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-          <p className="text-[11px] text-gray-500 font-medium">
-            Session Core Connected
+      {/* Footer Status */}
+      <div className="p-4 border-t border-slate-100 bg-slate-50/40">
+        <div className="flex items-center gap-2 px-1">
+          <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.4)] animate-pulse" />
+          <p
+            className="text-[10px] font-bold text-slate-400 uppercase tracking-wider"
+            style={{ fontFamily: "'Inter', sans-serif" }}
+          >
+            System Active
           </p>
         </div>
       </div>

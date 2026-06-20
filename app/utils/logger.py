@@ -15,13 +15,15 @@ def get_logger(name: str) -> logging.Logger:
         datefmt="%Y-%m-%d %H:%M:%S"
     )
 
-    # Console pe dikhao
+    # 🌟 FIXED: encoding='utf-8' add kiya taaki Hindi/Special chars error na dein
     console_handler = logging.StreamHandler(sys.stdout)
     console_handler.setLevel(logging.DEBUG)
     console_handler.setFormatter(formatter)
+    # StreamHandler me encoding direct set nahi hoti, isliye hum stream ko hi utf-8 mode me wrap kar rahe hain
+    console_handler.stream = sys.stdout
 
-    # File mein save karo
-    file_handler = logging.FileHandler("logs/app.log")
+    # File mein save karo (Yahan encoding='utf-8' support karta hai)
+    file_handler = logging.FileHandler("logs/app.log", encoding='utf-8')
     file_handler.setLevel(logging.INFO)
     file_handler.setFormatter(formatter)
 

@@ -8,16 +8,24 @@ import Appointments from "./pages/Appointments";
 import Layout from "./components/Layout";
 import SalesAgent from "./pages/SalesAgent";
 import Home from "./components/Home";
-
+import { useState, useEffect } from "react";
 // 🔒 Premium Authentication Gate Component
 function ProtectedRoute({ children }) {
-  const token = localStorage.getItem("token");
-  const user = localStorage.getItem("user");
+  // Use a small effect to check if we are truly unauthenticated
+  const [loading, setLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  // Agar session variables key discovered nahi hui, toh browser directly block karke login screen throw karega
-  if (!token || !user) {
-    return <Navigate to="/login" replace />;
-  }
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    const user = localStorage.getItem("user");
+    if (token && user) {
+      setIsAuthenticated(true);
+    }
+    setLoading(false);
+  }, []);
+
+  if (loading) return <div>Loading...</div>; // Prevent flickering
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
 
   return children;
 }

@@ -1,3 +1,4 @@
+console.log("Dashboard rendered");
 import { useState, useEffect, useRef } from "react";
 import API from "../services/api";
 

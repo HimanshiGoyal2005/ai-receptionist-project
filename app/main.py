@@ -3,7 +3,8 @@ import json
 from fastapi import FastAPI, HTTPException, Request, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-
+from dotenv import load_dotenv
+load_dotenv()
 from app.database import create_tables
 from app.api.leads_api import router as leads_router
 from app.api.appointments_api import router as appointments_router

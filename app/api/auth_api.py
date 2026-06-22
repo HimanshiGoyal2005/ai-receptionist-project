@@ -1,14 +1,19 @@
 from datetime import datetime, timedelta
-from fastapi import APIRouter, Depends, HTTPException
+
+import requests
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from jose import jwt, JWTError
 from passlib.context import CryptContext
+from google.oauth2 import id_token
+from google.auth.transport import requests as google_requests
+import os
 
 from app.database import get_db
 from app.models.user import User
-from app.models.company import Company  # 🌟 Imported Company model for auto provisioning
+from app.models.company import Company
 from app.config import get_settings
 from app.utils.logger import get_logger
 
@@ -29,6 +34,10 @@ class RegisterRequest(BaseModel):
     name: str
     email: str
     password: str
+
+
+class GoogleAuthRequest(BaseModel):
+    token: str
 
 
 def hash_password(password: str) -> str:
@@ -131,6 +140,99 @@ def login(req: LoginRequest, db: Session = Depends(get_db)):
     }
 
 
+@router.post("/google")
+def google_auth(req: GoogleAuthRequest, db: Session = Depends(get_db)):
+    # 1. DEBUG: Check if environment variables are loaded
+    client_id = os.getenv("GOOGLE_CLIENT_ID")
+    client_secret = os.getenv("GOOGLE_CLIENT_SECRET")
+    
+    print(f"DEBUG: Client ID length: {len(client_id) if client_id else 0}")
+    print(f"DEBUG: Client Secret length: {len(client_secret) if client_secret else 0}")
+
+    token_url = "https://oauth2.googleapis.com/token"
+    params = {
+        "code": req.token,
+        "client_id": client_id,
+        "client_secret": client_secret,
+        "redirect_uri": "http://localhost:5173/login",
+        "grant_type": "authorization_code"
+    }
+    
+    # 2. DEBUG: Log the request parameters (but mask the secret!)
+    print(f"DEBUG: Sending request to Google with params: { {k: v for k, v in params.items() if k != 'client_secret'} }")
+    
+    response = requests.post(token_url, data=params)
+    data = response.json()
+    
+    # 3. DEBUG: Log the full raw response from Google
+    print(f"DEBUG: Raw response from Google: {data}")
+    
+    if "id_token" not in data:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Google Exchange Error: {data.get('error', 'Unknown')} - {data.get('error_description', 'No description')}"
+        )
+        
+    id_token_str = data["id_token"]
+    
+    # 4. Verify ID Token
+    idinfo = id_token.verify_oauth2_token(
+        id_token_str, google_requests.Request(), client_id,clock_skew_in_seconds=10
+    )
+    
+    email = idinfo.get("email")
+    name = idinfo.get("name")
+
+    user = db.query(User).filter(User.email == email).first()
+
+    if not user:
+        user = User(
+            name=name,
+            email=email,
+            password_hash=hash_password(os.urandom(16).hex()),
+            role="admin",
+            company_id=None
+        )
+
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+
+        company = Company(
+            company_name=f"{name}'s Organization",
+            industry="Technology",
+            phone=None,
+            plan="free",
+            status="active"
+        )
+
+        db.add(company)
+        db.commit()
+        db.refresh(company)
+
+        user.company_id = company.id
+        db.commit()
+        db.refresh(user)
+
+    token = create_token({
+        "user_id": user.id,
+        "email": user.email,
+        "company_id": user.company_id
+    })
+
+    logger.info(f"Google login successful: {user.email}")
+
+    return {
+        "token": token,
+        "user": {
+            "id": user.id,
+            "name": user.name,
+            "email": user.email,
+            "role": user.role,
+            "company_id": user.company_id
+        }
+    }
+
 @router.get("/me")
 def get_me(current_user: User = Depends(get_current_user)):
     return {
@@ -140,3 +242,5 @@ def get_me(current_user: User = Depends(get_current_user)):
         "role": current_user.role,
         "company_id": current_user.company_id
     }
+
+

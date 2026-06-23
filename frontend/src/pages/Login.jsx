@@ -444,11 +444,24 @@ export default function Login() {
   };
 
   const handleGoogleAuth = () => {
-    // Google OAuth implementation
-    window.location.href =
-      "https://accounts.google.com/o/oauth2/v2/auth?client_id=390866138300-beor5581k146cl48am9iq5q22vip1pke.apps.googleusercontent.com&redirect_uri=http://localhost:5173/login&response_type=code&scope=openid email profile";
-  };
+    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
+    const redirectUri =
+      window.location.hostname === "localhost"
+        ? "http://localhost:5173/login"
+        : "https://ai-receptionist-project.vercel.app/login";
+
+    const authUrl =
+      `https://accounts.google.com/o/oauth2/v2/auth` +
+      `?client_id=${clientId}` +
+      `&redirect_uri=${encodeURIComponent(redirectUri)}` +
+      `&response_type=code` +
+      `&scope=openid email profile` +
+      `&access_type=offline` +
+      `&prompt=consent`;
+
+    window.location.href = authUrl;
+  };
   return (
     <>
       <style>{`

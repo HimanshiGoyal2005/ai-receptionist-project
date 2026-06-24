@@ -137,3 +137,7 @@ async def sales_chat(request: Request):
     except Exception as err:
         logger.error(f"Root Sales workspace route crashed: {str(err)}")
         raise HTTPException(status_code=500, detail=str(err))
+    
+@app.get("/cors-test")
+def cors_test():
+        return {"message": "new deployment working"}

@@ -145,22 +145,24 @@ def google_auth(req: GoogleAuthRequest, db: Session = Depends(get_db)):
     # 1. DEBUG: Check if environment variables are loaded
     client_id = os.getenv("GOOGLE_CLIENT_ID")
     client_secret = os.getenv("GOOGLE_CLIENT_SECRET")
-    
+    redirect_uri = os.getenv("GOOGLE_REDIRECT_URI")
+
     print(f"DEBUG: Client ID length: {len(client_id) if client_id else 0}")
     print(f"DEBUG: Client Secret length: {len(client_secret) if client_secret else 0}")
-
+    print("GOOGLE_REDIRECT_URI =", os.getenv("GOOGLE_REDIRECT_URI"))
     token_url = "https://oauth2.googleapis.com/token"
+   
     params = {
-        "code": req.token,
-        "client_id": client_id,
-        "client_secret": client_secret,
-        "redirect_uri": "http://localhost:5173/login",
-        "grant_type": "authorization_code"
-    }
+    "code": req.token,
+    "client_id": client_id,
+    "client_secret": client_secret,
+    "redirect_uri": redirect_uri, 
+    "grant_type": "authorization_code"
+}
     
     # 2. DEBUG: Log the request parameters (but mask the secret!)
     print(f"DEBUG: Sending request to Google with params: { {k: v for k, v in params.items() if k != 'client_secret'} }")
-    
+
     response = requests.post(token_url, data=params)
     data = response.json()
     

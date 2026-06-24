@@ -1,8 +1,11 @@
 import os
 import json
+
+from h11 import Response
 from fastapi import FastAPI, HTTPException, Request, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from fastapi import Response
 from dotenv import load_dotenv
 load_dotenv()
 from app.database import create_tables
@@ -28,18 +31,22 @@ app = FastAPI(
     version="2.0.0"
 )
 origins = [
-    "https://ai-receptionist-project-n83049usd-himanshis-projects-2ac0713f.vercel.app", 
+    "https://ai-receptionist-project.vercel.app", 
     "http://localhost:5173", # Keep this for local dev
 ]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins, # Explicitly list your production URL here
+    allow_origins=["*"], 
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 app.mount("/static", StaticFiles(directory="static"), name="static")
+
+@app.options("/{full_path:path}")
+async def options_handler(full_path: str):
+    return Response(status_code=200)
 
 # Core Routers Integration
 app.include_router(auth_router)

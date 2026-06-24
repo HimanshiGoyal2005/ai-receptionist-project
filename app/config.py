@@ -13,6 +13,7 @@ class Settings(BaseSettings):
     jwt_algorithm: str = "HS256"
     google_client_id: str =""
     google_client_secret: str=""
+    google_redirect_uri: str = ""
     class Config:
         # Point to the .env located inside the app package so loading works
         # regardless of the current working directory when the server starts.

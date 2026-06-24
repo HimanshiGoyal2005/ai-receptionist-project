@@ -89,7 +89,10 @@ def health_check():
     logger.info("Health check called")
     return {"status": "ok", "message": "AI Voice Receptionist is running!", "version": "2.0.0"}
 
-
+@app.get("/cors-test")
+def cors_test():
+    return {"message": "new deployment working"}
+    
 # ═════════════════════════════════════════════════════════════
 # 🤖 UPGRADED SALES AGENT INTERFACE PIPELINE
 # ═════════════════════════════════════════════════════════════
@@ -138,6 +141,3 @@ async def sales_chat(request: Request):
         logger.error(f"Root Sales workspace route crashed: {str(err)}")
         raise HTTPException(status_code=500, detail=str(err))
     
-@app.get("/cors-test")
-def cors_test():
-        return {"message": "new deployment working"}
